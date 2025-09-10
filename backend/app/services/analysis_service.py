@@ -1,13 +1,18 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-from sqlalchemy.orm import selectinload
+import logging
+from datetime import datetime
+import json
 
 from app.models.analysis import AnalysisJob, AnalysisResult
 from app.models.crawl import CrawledPage
 from app.services.crawler import WebsiteCrawler
 from app.services.analyzer import WebsiteAnalyzer
+from app.services.cost_tracking_service import get_cost_tracking_service
+from app.core.database import get_db
+from sqlalchemy import select, update
+from sqlalchemy.orm import selectinload
 from app.core.redis import redis_client
 from app.schemas.analysis import MessagingAnalysis, MessagingScores
 
