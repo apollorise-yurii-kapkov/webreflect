@@ -76,7 +76,7 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 1.2, ease: "easeOut" }}
-          className="text-center max-w-md"
+          className="text-center max-w-2xl mx-auto flex flex-col items-center"
         >
           {/* Title */}
           <motion.h1
@@ -85,7 +85,7 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
             transition={{ delay: 0.5, duration: 0.8 }}
             className="text-5xl font-light text-white mb-4 tracking-wide"
           >
-            Website Mirror
+            See Your Website’s True Reflection
           </motion.h1>
 
           {/* Description */}
@@ -93,9 +93,9 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="text-xl text-gray-300 mb-12 max-w-2xl leading-relaxed"
+            className="text-xl text-gray-300 mb-12 leading-relaxed text-center"
           >
-            See what your website truly reflects. Get an objective analysis of your site&apos;s message and content.
+            Paste your URL and watch AI uncover the real message your site delivers. A free website content & messaging audit — in one clear, objective summary.
           </motion.p>
 
           {/* Input form */}
@@ -104,7 +104,7 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.9, duration: 0.8 }}
             onSubmit={handleSubmit}
-            className="w-full max-w-md"
+            className="w-full max-w-lg mx-auto"
           >
             <div className="relative">
               <input
@@ -129,7 +129,7 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
                     className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                   />
                 ) : (
-                  'Analyze'
+                  'Reflect My Site'
                 )}
               </motion.button>
             </div>
