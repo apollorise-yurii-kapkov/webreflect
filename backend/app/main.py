@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import init_db
 from app.api.v1.api import api_router
+from app.middleware.rate_limit import RateLimitMiddleware
 
 
 @asynccontextmanager
@@ -28,19 +29,32 @@ def create_application() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Rate limiting middleware (first)
+    app.middleware("http")(RateLimitMiddleware(calls=10, period=60))
+    
     # Security middleware
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=settings.ALLOWED_HOSTS,
     )
 
-    # CORS middleware
+    # CORS middleware - restricted to frontend domains only
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.BACKEND_CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],  # Include OPTIONS for preflight
+        allow_headers=[
+            "Authorization", 
+            "Content-Type", 
+            "Accept",
+            "Accept-Language",
+            "Sec-Ch-Ua",
+            "Sec-Ch-Ua-Mobile", 
+            "Sec-Ch-Ua-Platform",
+            "User-Agent",
+            "Referer"
+        ],
     )
 
     # Include API router

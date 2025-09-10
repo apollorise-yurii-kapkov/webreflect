@@ -168,3 +168,10 @@ class AnalysisService:
         
         # Fallback to database
         return {"status": "unknown", "progress": 0}
+    
+    async def share_analysis_job(self, db: AsyncSession, job_id: UUID) -> bool:
+        """Mark analysis job as shared (publicly accessible)."""
+        query = update(AnalysisJob).where(AnalysisJob.id == job_id).values(is_shared=True)
+        result = await db.execute(query)
+        await db.commit()
+        return result.rowcount > 0

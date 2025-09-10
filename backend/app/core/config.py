@@ -23,10 +23,15 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ALLOWED_HOSTS: List[str] = ["*"]
     
-    # CORS
+    # Basic Auth for API protection
+    API_USERNAME: str = "admin"
+    API_PASSWORD: str = "secure_password_2024"
+    
+    # CORS - restrict to frontend domain only
     BACKEND_CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://your-frontend-domain.com",  # Add production frontend domain
     ]
     
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
