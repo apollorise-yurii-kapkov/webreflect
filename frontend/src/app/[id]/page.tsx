@@ -78,9 +78,12 @@ export default function ReportPage() {
   }
 
   return (
-    <SummarySection 
-      data={analysisData} 
-      onReset={handleReset}
-    />
+    <div className="min-h-screen bg-black">
+      <SummarySection 
+        data={analysisData} 
+        onReset={handleReset}
+      />
+      <Footer />
+    </div>
   )
 }
