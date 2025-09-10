@@ -6,22 +6,22 @@ Update these values based on actual service pricing.
 # OpenAI API Pricing (per token)
 OPENAI_COSTS = {
     "gpt-5-nano": {
-        "input": 0.00005,   # $0.050 per 1M tokens
-        "cached_input": 0.000005,  # $0.005 per 1M tokens
-        "output": 0.0004,   # $0.400 per 1M tokens
+        "input": 0.00000005,   # $0.05 per 1M tokens
+        "cached_input": 0.000000005,  # $0.005 per 1M tokens  
+        "output": 0.0000004,   # $0.40 per 1M tokens
     },
     "gpt-5-mini": {
-        "input": 0.00025,   # $0.250 per 1M tokens
-        "cached_input": 0.000025,  # $0.025 per 1M tokens
-        "output": 0.002,    # $2.000 per 1M tokens
+        "input": 0.00000025,   # $0.25 per 1M tokens
+        "cached_input": 0.000000025,  # $0.025 per 1M tokens
+        "output": 0.000002,    # $2.00 per 1M tokens
     },
     "gpt-4": {
-        "input": 0.00003,   # $0.03 per 1K tokens
-        "output": 0.00006,  # $0.06 per 1K tokens
+        "input": 0.00000003,   # $0.03 per 1M tokens (converted from per 1K)
+        "output": 0.00000006,  # $0.06 per 1M tokens (converted from per 1K)
     },
     "gpt-4-turbo": {
-        "input": 0.00001,   # $0.01 per 1K tokens  
-        "output": 0.00003,  # $0.03 per 1K tokens
+        "input": 0.00000001,   # $0.01 per 1M tokens (converted from per 1K)
+        "output": 0.00000003,  # $0.03 per 1M tokens (converted from per 1K)
     },
     "gpt-3.5-turbo": {
         "input": 0.0000005, # $0.50 per 1M tokens
@@ -32,10 +32,11 @@ OPENAI_COSTS = {
 # Primary model configuration
 PRIMARY_MODEL = "gpt-5-nano"
 
-# Crawling costs (estimated)
+# Crawling costs (httpx + BeautifulSoup - no tokens used)
 CRAWLING_COSTS = {
-    "cost_per_page": 0.001,  # $0.001 per page crawled
-    "cost_per_mb": 0.01,     # $0.01 per MB of data
+    "cost_per_page": 0.0,    # $0.00 - httpx requests are free
+    "cost_per_mb": 0.0,      # $0.00 - BeautifulSoup parsing is free
+    "bandwidth_cost": 0.0001, # $0.0001 per MB of bandwidth (optional)
 }
 
 # Infrastructure costs (daily estimates)

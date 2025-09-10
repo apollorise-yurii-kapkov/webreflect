@@ -16,14 +16,14 @@ class WebsiteAnalyzer:
         self.model = settings.ANALYSIS_MODEL
         self.max_tokens = settings.MAX_TOKENS_PER_ANALYSIS
     
-    async def analyze_website_content(self, pages_data: List[Dict]) -> Dict:
+    async def analyze_website_content(self, pages_data: List[Dict], job_id: str = None) -> Dict:
         """Analyze website content and generate objective summary."""
         try:
             # Prepare content for analysis
             content_summary = self._prepare_content_for_analysis(pages_data)
             
             # Generate objective analysis without scoring
-            objective_analysis = await self._generate_objective_summary(content_summary)
+            objective_analysis = await self._generate_objective_summary(content_summary, job_id)
             
             return {
                 'content_summary': objective_analysis,
@@ -62,7 +62,7 @@ class WebsiteAnalyzer:
         
         return "\n\n".join(content_parts)
     
-    async def _generate_objective_summary(self, content: str) -> str:
+    async def _generate_objective_summary(self, content: str, job_id: str = None) -> str:
         """Generate an objective, factual summary of the website content."""
         prompt = f"""
         Analyze the following website content and provide a comprehensive, objective summary.
@@ -100,6 +100,47 @@ class WebsiteAnalyzer:
                 temperature=0.1
             )
             
+            # Log OpenAI API cost if job_id is provided
+            if job_id:
+                from app.services.cost_tracking_service import get_cost_tracking_service
+                from app.core.cost_config import OPENAI_COSTS, PRIMARY_MODEL
+                from app.core.database import get_db
+                
+                # Get actual token usage from OpenAI response
+                usage = response.usage
+                input_tokens = usage.prompt_tokens
+                output_tokens = usage.completion_tokens
+                total_tokens = usage.total_tokens
+                
+                # Get cost per token for the model
+                model_costs = OPENAI_COSTS.get(PRIMARY_MODEL, OPENAI_COSTS.get("gpt-3.5-turbo"))
+                input_cost_per_token = model_costs.get("input", 0.0000005)
+                output_cost_per_token = model_costs.get("output", 0.0000015)
+                
+                # Calculate total cost (input + output tokens have different prices)
+                total_cost = (input_tokens * input_cost_per_token) + (output_tokens * output_cost_per_token)
+                
+                # Log the cost
+                async for db in get_db():
+                    cost_service = get_cost_tracking_service(db)
+                    await cost_service.log_cost(
+                        service="openai",
+                        operation=f"{PRIMARY_MODEL}-analysis",
+                        cost_amount=total_cost,
+                        job_id=job_id,
+                        tokens_used=total_tokens,
+                        requests_count=1,
+                        description=f"OpenAI {PRIMARY_MODEL} API call for analysis",
+                        extra_data={
+                            "model": PRIMARY_MODEL,
+                            "input_tokens": input_tokens,
+                            "output_tokens": output_tokens,
+                            "input_cost_per_token": input_cost_per_token,
+                            "output_cost_per_token": output_cost_per_token
+                        }
+                    )
+                    break
+            
             return response.choices[0].message.content.strip()
                 
         except Exception as e:
@@ -107,23 +148,12 @@ class WebsiteAnalyzer:
             return "Unable to generate website summary due to analysis error."
     
     async def _analyze_messaging(self, content: str) -> MessagingAnalysis:
-        """Analyze messaging using OpenAI."""
+        """Analyze messaging using OpenAI with structured outputs."""
         prompt = f"""
         Analyze the following website content and provide a comprehensive messaging analysis.
         
         Website Content:
         {content}
-        
-        Please provide a JSON response with the following structure:
-        {{
-            "primary_message": "The main message this website conveys to visitors",
-            "target_audience": "Who this website is primarily targeting",
-            "value_proposition": "The core value proposition offered",
-            "tone_and_voice": "Description of the brand's tone and voice",
-            "key_themes": ["theme1", "theme2", "theme3"],
-            "strengths": ["strength1", "strength2", "strength3"],
-            "weaknesses": ["weakness1", "weakness2", "weakness3"]
-        }}
         
         Focus on:
         - What message visitors would actually receive
@@ -131,6 +161,46 @@ class WebsiteAnalyzer:
         - Whether the messaging is consistent across pages
         - How well it differentiates from competitors
         """
+        
+        # Define the response schema for structured outputs
+        response_schema = {
+            "type": "object",
+            "properties": {
+                "primary_message": {
+                    "type": "string",
+                    "description": "The main message this website conveys to visitors"
+                },
+                "target_audience": {
+                    "type": "string", 
+                    "description": "Who this website is primarily targeting"
+                },
+                "value_proposition": {
+                    "type": "string",
+                    "description": "The core value proposition offered"
+                },
+                "tone_and_voice": {
+                    "type": "string",
+                    "description": "Description of the brand's tone and voice"
+                },
+                "key_themes": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Key themes found in the messaging"
+                },
+                "strengths": {
+                    "type": "array", 
+                    "items": {"type": "string"},
+                    "description": "Messaging strengths identified"
+                },
+                "weaknesses": {
+                    "type": "array",
+                    "items": {"type": "string"}, 
+                    "description": "Messaging weaknesses identified"
+                }
+            },
+            "required": ["primary_message", "target_audience", "value_proposition", "tone_and_voice", "key_themes", "strengths", "weaknesses"],
+            "additionalProperties": False
+        }
         
         try:
             response = await self.client.chat.completions.create(
@@ -140,34 +210,27 @@ class WebsiteAnalyzer:
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=1500,
-                temperature=0.3
+                temperature=0.3,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "messaging_analysis",
+                        "schema": response_schema
+                    }
+                }
             )
             
+            # With structured outputs, the response is guaranteed to be valid JSON
             content_text = response.choices[0].message.content
-            
-            # Extract JSON from response
-            json_match = re.search(r'\{.*\}', content_text, re.DOTALL)
-            if json_match:
-                analysis_data = json.loads(json_match.group())
-                return MessagingAnalysis(**analysis_data)
-            else:
-                # Fallback if JSON parsing fails
-                return MessagingAnalysis(
-                    primary_message="Unable to analyze primary message",
-                    target_audience="Unable to identify target audience",
-                    value_proposition="Unable to identify value proposition",
-                    tone_and_voice="Unable to analyze tone and voice",
-                    key_themes=["Analysis failed"],
-                    strengths=["Analysis failed"],
-                    weaknesses=["Analysis failed"]
-                )
+            analysis_data = json.loads(content_text)
+            return MessagingAnalysis(**analysis_data)
                 
         except Exception as e:
             print(f"Error in messaging analysis: {e}")
             raise
     
     async def _calculate_scores(self, content: str, messaging_analysis: MessagingAnalysis) -> MessagingScores:
-        """Calculate messaging scores using AI."""
+        """Calculate messaging scores using AI with structured outputs."""
         prompt = f"""
         Based on the website content and messaging analysis, provide numerical scores (0-100) for each category.
         
@@ -180,16 +243,6 @@ class WebsiteAnalyzer:
         - Strengths: {', '.join(messaging_analysis.strengths)}
         - Weaknesses: {', '.join(messaging_analysis.weaknesses)}
         
-        Provide scores as JSON:
-        {{
-            "clarity": 85,
-            "consistency": 75,
-            "differentiation": 60,
-            "proof": 70,
-            "cta_strength": 80,
-            "audience_fit": 90
-        }}
-        
         Scoring criteria:
         - Clarity: How clear and understandable is the message?
         - Consistency: How consistent is messaging across pages?
@@ -199,6 +252,51 @@ class WebsiteAnalyzer:
         - Audience Fit: How well does it match the target audience?
         """
         
+        # Define the response schema for structured outputs
+        scores_schema = {
+            "type": "object",
+            "properties": {
+                "clarity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "How clear and understandable is the message"
+                },
+                "consistency": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "How consistent is messaging across pages"
+                },
+                "differentiation": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "How well does it stand out from competitors"
+                },
+                "proof": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "How much social proof and credibility is shown"
+                },
+                "cta_strength": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "How compelling and clear are the calls-to-action"
+                },
+                "audience_fit": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "How well does it match the target audience"
+                }
+            },
+            "required": ["clarity", "consistency", "differentiation", "proof", "cta_strength", "audience_fit"],
+            "additionalProperties": False
+        }
+        
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
@@ -207,49 +305,47 @@ class WebsiteAnalyzer:
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=500,
-                temperature=0.1
+                temperature=0.1,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "messaging_scores",
+                        "schema": scores_schema
+                    }
+                }
             )
             
+            # With structured outputs, the response is guaranteed to be valid JSON
             content_text = response.choices[0].message.content
+            scores_data = json.loads(content_text)
             
-            # Extract JSON from response
-            json_match = re.search(r'\{.*\}', content_text, re.DOTALL)
-            if json_match:
-                scores_data = json.loads(json_match.group())
-                
-                # Calculate overall score
-                individual_scores = [
-                    scores_data.get('clarity', 50),
-                    scores_data.get('consistency', 50),
-                    scores_data.get('differentiation', 50),
-                    scores_data.get('proof', 50),
-                    scores_data.get('cta_strength', 50),
-                    scores_data.get('audience_fit', 50)
-                ]
-                overall_score = sum(individual_scores) // len(individual_scores)
-                
-                return MessagingScores(
-                    clarity=scores_data.get('clarity', 50),
-                    consistency=scores_data.get('consistency', 50),
-                    differentiation=scores_data.get('differentiation', 50),
-                    proof=scores_data.get('proof', 50),
-                    cta_strength=scores_data.get('cta_strength', 50),
-                    audience_fit=scores_data.get('audience_fit', 50),
-                    overall=overall_score
-                )
-            else:
-                # Fallback scores
-                return MessagingScores(
-                    clarity=50, consistency=50, differentiation=50,
-                    proof=50, cta_strength=50, audience_fit=50, overall=50
-                )
+            # Calculate overall score
+            individual_scores = [
+                scores_data.get('clarity', 50),
+                scores_data.get('consistency', 50),
+                scores_data.get('differentiation', 50),
+                scores_data.get('proof', 50),
+                scores_data.get('cta_strength', 50),
+                scores_data.get('audience_fit', 50)
+            ]
+            overall_score = sum(individual_scores) // len(individual_scores)
+            
+            return MessagingScores(
+                clarity=scores_data.get('clarity', 50),
+                consistency=scores_data.get('consistency', 50),
+                differentiation=scores_data.get('differentiation', 50),
+                proof=scores_data.get('proof', 50),
+                cta_strength=scores_data.get('cta_strength', 50),
+                audience_fit=scores_data.get('audience_fit', 50),
+                overall=overall_score
+            )
                 
         except Exception as e:
             print(f"Error calculating scores: {e}")
             raise
     
     async def _generate_quick_wins(self, content: str, messaging_analysis: MessagingAnalysis, scores: MessagingScores) -> List[str]:
-        """Generate actionable quick wins based on analysis."""
+        """Generate actionable quick wins based on analysis with structured outputs."""
         prompt = f"""
         Based on the website analysis, provide 5-7 specific, actionable "quick wins" that could immediately improve the website's messaging.
         
@@ -263,21 +359,31 @@ class WebsiteAnalyzer:
         - CTA Strength: {scores.cta_strength}/100
         - Audience Fit: {scores.audience_fit}/100
         
-        Provide a JSON array of specific, actionable recommendations:
-        [
-            "Add a clear value proposition statement to the homepage hero section",
-            "Strengthen the main CTA button text to be more action-oriented",
-            "Include customer testimonials or social proof elements",
-            "Simplify the navigation menu to reduce cognitive load",
-            "Add benefit-focused headlines instead of feature-focused ones"
-        ]
-        
         Focus on:
         - Easy to implement changes
         - High impact improvements
         - Specific, not generic advice
         - Address the lowest scoring areas first
         """
+        
+        # Define the response schema for structured outputs
+        quick_wins_schema = {
+            "type": "object",
+            "properties": {
+                "recommendations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "A specific, actionable recommendation for improving website messaging"
+                    },
+                    "minItems": 5,
+                    "maxItems": 7,
+                    "description": "List of quick win recommendations"
+                }
+            },
+            "required": ["recommendations"],
+            "additionalProperties": False
+        }
         
         try:
             response = await self.client.chat.completions.create(
@@ -287,25 +393,20 @@ class WebsiteAnalyzer:
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=800,
-                temperature=0.2
+                temperature=0.2,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "quick_wins",
+                        "schema": quick_wins_schema
+                    }
+                }
             )
             
+            # With structured outputs, the response is guaranteed to be valid JSON
             content_text = response.choices[0].message.content
-            
-            # Extract JSON array from response
-            json_match = re.search(r'\[.*\]', content_text, re.DOTALL)
-            if json_match:
-                quick_wins = json.loads(json_match.group())
-                return quick_wins
-            else:
-                # Fallback quick wins
-                return [
-                    "Clarify your main value proposition on the homepage",
-                    "Strengthen call-to-action button text",
-                    "Add social proof elements like testimonials",
-                    "Improve headline clarity and benefit focus",
-                    "Ensure consistent messaging across all pages"
-                ]
+            response_data = json.loads(content_text)
+            return response_data.get('recommendations', [])
                 
         except Exception as e:
             print(f"Error generating quick wins: {e}")

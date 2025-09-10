@@ -39,7 +39,7 @@ class Settings(BaseSettings):
         raise ValueError(v)
     
     # Crawling settings
-    MAX_PAGES_PER_SITE: int = 20
+    MAX_PAGES_PER_SITE: int = 30
     CRAWL_TIMEOUT: int = 30
     MAX_CONTENT_LENGTH: int = 50000
     

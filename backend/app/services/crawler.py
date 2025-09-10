@@ -27,19 +27,31 @@ class WebsiteCrawler:
                     return []
                 
                 pages = [main_page]
+                crawled_urls = {url}
+                
+                # Try to get sitemap for comprehensive page discovery
+                sitemap_urls = await self._get_sitemap_urls(client, url)
                 
                 # Extract internal links from main page
                 internal_links = self._extract_internal_links(url, main_page.get('raw_html', ''))
                 
+                # Prioritize navigation and important pages
+                prioritized_links = self._prioritize_links(internal_links, main_page.get('raw_html', ''))
+                
+                # Combine sitemap URLs with discovered links, prioritizing sitemap
+                all_links = list(dict.fromkeys(sitemap_urls + prioritized_links))  # Remove duplicates, keep order
+                
                 # Crawl additional pages (limited)
-                for link in internal_links[:self.max_pages - 1]:
-                    try:
-                        page = await self._crawl_page(client, link)
-                        if page:
-                            pages.append(page)
-                    except Exception as e:
-                        print(f"Error crawling {link}: {e}")
-                        continue
+                for link in all_links[:self.max_pages - 1]:
+                    if link not in crawled_urls:
+                        try:
+                            page = await self._crawl_page(client, link)
+                            if page:
+                                pages.append(page)
+                                crawled_urls.add(link)
+                        except Exception as e:
+                            print(f"Error crawling {link}: {e}")
+                            continue
                 
                 return pages
                 
@@ -118,18 +130,133 @@ class WebsiteCrawler:
                 full_url = urljoin(base_url, href)
                 parsed_url = urlparse(full_url)
                 
-                # Only include internal links
+                # Only include internal links, exclude fragments, files, and special links
                 if (parsed_url.netloc == base_domain and 
                     not href.startswith('#') and 
                     not href.startswith('mailto:') and
-                    not href.startswith('tel:')):
-                    links.add(full_url)
+                    not href.startswith('tel:') and
+                    not any(full_url.lower().endswith(ext) for ext in ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.zip', '.doc', '.docx'])):
+                    # Clean URL by removing fragments and query params for deduplication
+                    clean_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
+                    if clean_url.endswith('/'):
+                        clean_url = clean_url.rstrip('/')
+                    links.add(clean_url or full_url)
             
             return list(links)
             
         except Exception as e:
             print(f"Error extracting links: {e}")
             return []
+    
+    async def _get_sitemap_urls(self, client: httpx.AsyncClient, base_url: str) -> List[str]:
+        """Try to fetch and parse sitemap.xml for comprehensive page discovery."""
+        sitemap_urls = []
+        
+        # Common sitemap locations
+        sitemap_paths = ['/sitemap.xml', '/sitemap_index.xml', '/robots.txt']
+        
+        for path in sitemap_paths:
+            try:
+                sitemap_url = urljoin(base_url, path)
+                response = await client.get(sitemap_url, timeout=10)
+                
+                if response.status_code == 200:
+                    if path == '/robots.txt':
+                        # Extract sitemap URLs from robots.txt
+                        for line in response.text.split('\n'):
+                            if line.lower().startswith('sitemap:'):
+                                sitemap_url = line.split(':', 1)[1].strip()
+                                sitemap_response = await client.get(sitemap_url, timeout=10)
+                                if sitemap_response.status_code == 200:
+                                    sitemap_urls.extend(self._parse_sitemap_xml(sitemap_response.text, base_url))
+                    else:
+                        # Parse XML sitemap
+                        sitemap_urls.extend(self._parse_sitemap_xml(response.text, base_url))
+                    
+                    if sitemap_urls:
+                        break  # Found sitemap, no need to try others
+                        
+            except Exception as e:
+                print(f"Error fetching sitemap {path}: {e}")
+                continue
+        
+        return sitemap_urls[:15]  # Limit sitemap URLs
+    
+    def _parse_sitemap_xml(self, xml_content: str, base_url: str) -> List[str]:
+        """Parse sitemap XML and extract URLs."""
+        urls = []
+        try:
+            soup = BeautifulSoup(xml_content, 'xml')
+            base_domain = urlparse(base_url).netloc
+            
+            # Handle regular sitemap
+            for url_tag in soup.find_all('url'):
+                loc_tag = url_tag.find('loc')
+                if loc_tag and loc_tag.text:
+                    url = loc_tag.text.strip()
+                    parsed_url = urlparse(url)
+                    if parsed_url.netloc == base_domain:
+                        urls.append(url)
+            
+            # Handle sitemap index
+            for sitemap_tag in soup.find_all('sitemap'):
+                loc_tag = sitemap_tag.find('loc')
+                if loc_tag and loc_tag.text:
+                    # Could recursively fetch sub-sitemaps, but keep it simple for now
+                    pass
+                    
+        except Exception as e:
+            print(f"Error parsing sitemap XML: {e}")
+        
+        return urls
+    
+    def _prioritize_links(self, links: List[str], html: str) -> List[str]:
+        """Prioritize links based on navigation menus and importance."""
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
+            prioritized = []
+            regular = []
+            
+            # Find navigation elements
+            nav_selectors = [
+                'nav a', 'header nav a', '.navbar a', '.navigation a', 
+                '.menu a', '.main-menu a', '#menu a', '#navigation a',
+                '[role="navigation"] a', '.nav a', '.primary-nav a'
+            ]
+            
+            nav_links = set()
+            base_domain = urlparse(links[0] if links else '').netloc
+            
+            for selector in nav_selectors:
+                for link in soup.select(selector):
+                    href = link.get('href')
+                    if href:
+                        full_url = urljoin(links[0] if links else '', href)
+                        parsed_url = urlparse(full_url)
+                        # Only add links from the same domain
+                        if parsed_url.netloc == base_domain:
+                            nav_links.add(full_url)
+            
+            # Categorize links
+            for link in links:
+                if link in nav_links:
+                    prioritized.append(link)
+                else:
+                    # Prioritize common important pages
+                    path = urlparse(link).path.lower()
+                    if any(keyword in path for keyword in [
+                        'about', 'services', 'products', 'contact', 'pricing', 
+                        'features', 'solutions', 'company', 'team', 'careers'
+                    ]):
+                        prioritized.append(link)
+                    else:
+                        regular.append(link)
+            
+            return prioritized + regular
+            
+        except Exception as e:
+            print(f"Error prioritizing links: {e}")
+            return links
     
     def _extract_cta_texts(self, soup: BeautifulSoup) -> List[str]:
         """Extract Call-to-Action texts from the page."""
