@@ -12,7 +12,11 @@ export const metadata: Metadata = {
   description: 'See your website\'s true reflection. Analyze your messaging and discover what visitors actually hear.',
   keywords: 'website analysis, messaging analysis, website reflection, marketing analysis',
   authors: [{ name: 'Website Reflection' }],
-  viewport: 'width=device-width, initial-scale=1',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -22,7 +26,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body 
+        className={inter.className}
+        suppressHydrationWarning={true}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
