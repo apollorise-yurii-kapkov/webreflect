@@ -79,9 +79,24 @@ class AnalysisService:
             await self._update_job_status(db, job_id, "processing", 40, "Saving crawled data...")
             await self._save_crawled_pages(db, job_id, pages_data)
             
+            # Log crawling costs (httpx + BeautifulSoup are free, only bandwidth if needed)
+            cost_service = get_cost_tracking_service(db)
+            pages_count = len(pages_data)
+            data_size_mb = sum(len(page.get('content', '')) for page in pages_data) / (1024 * 1024)
+            
+            # Only log if there are actual costs (bandwidth usage)
+            if data_size_mb > 0:
+                bandwidth_cost = data_size_mb * 0.0001  # $0.0001 per MB bandwidth
+                await cost_service.log_crawling_cost(
+                    pages_crawled=pages_count,
+                    cost_per_page=0.0,  # httpx requests are free
+                    job_id=str(job_id),
+                    data_size_mb=data_size_mb
+                )
+            
             # Step 3: Analyze content
             await self._update_job_status(db, job_id, "processing", 60, "Analyzing content...")
-            analysis_result = await self.analyzer.analyze_website_content(pages_data)
+            analysis_result = await self.analyzer.analyze_website_content(pages_data, str(job_id))
             
             # Step 4: Save analysis results
             await self._update_job_status(db, job_id, "processing", 80, "Saving results...")

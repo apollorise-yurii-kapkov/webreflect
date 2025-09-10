@@ -18,7 +18,7 @@ class CostTrackingService:
     def __init__(self, db: Session):
         self.db = db
     
-    def log_cost(
+    async def log_cost(
         self,
         service: str,
         operation: str,
@@ -47,15 +47,15 @@ class CostTrackingService:
             )
             
             self.db.add(cost_entry)
-            self.db.commit()
-            self.db.refresh(cost_entry)
+            await self.db.commit()
+            await self.db.refresh(cost_entry)
             
             logger.info(f"Logged cost: {service}.{operation} = ${cost_amount}")
             return cost_entry
             
         except Exception as e:
             logger.error(f"Failed to log cost entry: {e}")
-            self.db.rollback()
+            await self.db.rollback()
             raise
     
     def get_costs_by_period(
@@ -184,7 +184,7 @@ class CostTrackingService:
             'top_services': top_services
         }
     
-    def log_openai_cost(
+    async def log_openai_cost(
         self,
         model: str,
         tokens_used: int,
@@ -195,7 +195,7 @@ class CostTrackingService:
         """Helper method to log OpenAI API costs."""
         cost_amount = tokens_used * cost_per_token
         
-        return self.log_cost(
+        return await self.log_cost(
             service="openai",
             operation=f"{model}-{operation}",
             cost_amount=cost_amount,
@@ -209,7 +209,7 @@ class CostTrackingService:
             }
         )
     
-    def log_crawling_cost(
+    async def log_crawling_cost(
         self,
         pages_crawled: int,
         cost_per_page: float,
@@ -219,9 +219,9 @@ class CostTrackingService:
         """Helper method to log web crawling costs."""
         cost_amount = pages_crawled * cost_per_page
         
-        return self.log_cost(
-            service="crawl4ai",
-            operation="website-crawl",
+        return await self.log_cost(
+            service="crawling",
+            operation="web-crawl",
             cost_amount=cost_amount,
             job_id=job_id,
             requests_count=pages_crawled,
