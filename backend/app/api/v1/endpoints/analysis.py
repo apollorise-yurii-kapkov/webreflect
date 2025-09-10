@@ -1,15 +1,17 @@
 from typing import Dict
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.security import get_current_user
 from app.services.analysis_service import AnalysisService
 from app.schemas.analysis import (
     AnalysisRequest,
     AnalysisJobResponse,
-    AnalysisResultResponse,
-    AnalysisStatusResponse
+    AnalysisStatusResponse,
+    AnalysisResultResponse
 )
 
 router = APIRouter()
@@ -20,7 +22,8 @@ analysis_service = AnalysisService()
 async def start_website_analysis(
     request: AnalysisRequest,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
 ):
     """Start website analysis process."""
     try:
@@ -50,7 +53,8 @@ async def start_website_analysis(
 @router.get("/reflect/{job_id}/status", response_model=AnalysisStatusResponse)
 async def get_analysis_status(
     job_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
 ):
     """Get analysis job status."""
     try:
@@ -160,3 +164,72 @@ async def get_crawled_pages(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to get crawled pages")
+
+
+@router.post("/reflect/{job_id}/share")
+async def share_analysis_report(
+    job_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Mark analysis report as shared (publicly accessible)."""
+    try:
+        job = await analysis_service.get_analysis_job(db, job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        if job.status != "completed":
+            raise HTTPException(status_code=400, detail="Cannot share incomplete analysis")
+        
+        # Mark as shared
+        await analysis_service.share_analysis_job(db, job_id)
+        
+        return {"shared": True}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to share analysis report")
+
+
+@router.get("/shared/{job_id}", response_model=AnalysisStatusResponse)
+async def get_shared_analysis_report(
+    job_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get shared analysis report (no authentication required)."""
+    try:
+        job = await analysis_service.get_analysis_job(db, job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        if job.status != "completed":
+            raise HTTPException(status_code=400, detail="Analysis not completed")
+        
+        # Build response data
+        response_data = {
+            "job_id": job.id,
+            "url": job.url,
+            "status": job.status,
+            "progress": 100,
+            "created_at": job.created_at,
+            "updated_at": job.updated_at,
+            "completed_at": job.completed_at,
+            "error_message": job.error_message
+        }
+        
+        # Include result data
+        if job.result:
+            response_data["result"] = {
+                "content_summary": job.result.content_summary,
+                "messaging_analysis": job.result.messaging_analysis,
+                "scores": job.result.scores,
+                "quick_wins": job.result.quick_wins
+            }
+        
+        return AnalysisStatusResponse(**response_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to get shared report")

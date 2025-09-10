@@ -1,8 +1,17 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { AnalysisData } from '@/app/page'
+import { AnalysisResult } from './analysis-result'
+import { Copy, Share2, Download } from 'lucide-react'
+
+interface AnalysisData {
+  jobId: string
+  url: string
+  status: string
+  progress: number
+  result?: any
+}
 
 interface SummarySectionProps {
   data: AnalysisData
@@ -11,6 +20,7 @@ interface SummarySectionProps {
 }
 
 export function SummarySection({ data, onReset, isError }: SummarySectionProps) {
+  const [copySuccess, setCopySuccess] = useState(false)
   if (isError) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8 bg-black">
@@ -39,10 +49,28 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
     )
   }
 
+  // Check if we have complete analysis results with scores
+  const hasCompleteResults = data.result?.scores && data.result?.messaging_analysis
+  
+  // Debug: log the data structure
+  console.log('Analysis data:', data)
+  console.log('Has complete results:', hasCompleteResults)
+  console.log('Scores:', data.result?.scores)
+  console.log('Messaging analysis:', data.result?.messaging_analysis)
+
+  // Show AnalysisResult only if we have complete results with scores
+  if (hasCompleteResults) {
+    // Show the full analysis result with scores and buttons
+    return (
+      <div className="min-h-screen bg-black p-8">
+        <AnalysisResult data={data} onReset={onReset} />
+      </div>
+    )
+  }
+
+  // Fallback to simple summary view for incomplete results
   const summary = data.result?.content_summary || ''
   const messaging = data.result?.messaging_analysis || ''
-
-  // Combine and format the analysis text
   const analysisText = `${summary}\n\n${messaging}`.trim()
 
   return (
@@ -55,15 +83,101 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
       >
         <div className="max-w-4xl mx-auto px-8 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-light text-white">Website Analysis</h1>
+            <h1 className="text-2xl font-light text-white">Website Reflection</h1>
             <p className="text-gray-400 text-sm mt-1">{data.url}</p>
           </div>
-          <button
-            onClick={onReset}
-            className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/20 text-sm"
-          >
-            New Analysis
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Share/Copy/Download buttons */}
+            <button
+              onClick={async () => {
+                try {
+                  const reportText = `Website Analysis Report\n\nURL: ${data.url}\n\n${analysisText}`
+                  await navigator.clipboard.writeText(reportText)
+                  setCopySuccess(true)
+                  setTimeout(() => setCopySuccess(false), 2000)
+                } catch (error) {
+                  console.error('Failed to copy:', error)
+                }
+              }}
+              className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-white/10 hover:border-white/20 text-sm flex items-center gap-2"
+            >
+              <Copy className="w-4 h-4" />
+              {copySuccess ? 'Copied' : 'Copy'}
+            </button>
+            
+            <button
+              onClick={async () => {
+                try {
+                  if (data.jobId) {
+                    // Share the report
+                    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+                    const response = await fetch(`${API_BASE_URL}/api/v1/analysis/reflect/${data.jobId}/share`, {
+                      method: 'POST',
+                      headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa('admin:secure_password_2024')
+                      }
+                    })
+                    
+                    if (response.ok) {
+                      const shareUrl = `${window.location.origin}/${data.jobId}`
+                      
+                      if (navigator.share) {
+                        await navigator.share({
+                          title: 'Website Analysis Report',
+                          text: 'Check out this website analysis report',
+                          url: shareUrl
+                        })
+                      } else {
+                        await navigator.clipboard.writeText(shareUrl)
+                      }
+                    }
+                  }
+                } catch (error) {
+                  console.error('Failed to share:', error)
+                }
+              }}
+              className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-white/10 hover:border-white/20 text-sm flex items-center gap-2"
+            >
+              <Share2 className="w-4 h-4" />
+              Share
+            </button>
+            
+            <button
+              onClick={async () => {
+                try {
+                  const { jsPDF } = await import('jspdf')
+                  const pdf = new jsPDF()
+                  
+                  // Add content to PDF
+                  pdf.setFontSize(20)
+                  pdf.text('Website Analysis Report', 20, 30)
+                  
+                  pdf.setFontSize(12)
+                  pdf.text(`URL: ${data.url}`, 20, 50)
+                  
+                  // Split long text into lines
+                  const lines = pdf.splitTextToSize(analysisText, 170)
+                  pdf.text(lines, 20, 70)
+                  
+                  pdf.save(`website-analysis-${new Date().toISOString().split('T')[0]}.pdf`)
+                } catch (error) {
+                  console.error('Failed to generate PDF:', error)
+                }
+              }}
+              className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-white/10 hover:border-white/20 text-sm flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              PDF
+            </button>
+            
+            <button
+              onClick={onReset}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
+            >
+              Run Another Reflection
+            </button>
+          </div>
         </div>
       </motion.div>
 

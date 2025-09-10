@@ -7,6 +7,7 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    'Authorization': 'Basic ' + btoa('admin:secure_password_2024'),
   },
 })
 
@@ -92,6 +93,18 @@ export const analysisApi = {
   // Get crawled pages
   getCrawledPages: async (jobId: string): Promise<any> => {
     const response = await api.get(`/analysis/reflect/${jobId}/pages`)
+    return response.data
+  },
+
+  // Share analysis report (makes it publicly accessible)
+  shareReport: async (jobId: string): Promise<{ shared: boolean }> => {
+    const response = await api.post(`/analysis/reflect/${jobId}/share`)
+    return response.data
+  },
+
+  // Get shared report (publicly accessible)
+  getSharedReport: async (jobId: string): Promise<AnalysisStatusResponse> => {
+    const response = await api.get(`/analysis/shared/${jobId}`)
     return response.data
   },
 }
