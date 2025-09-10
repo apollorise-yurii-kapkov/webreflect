@@ -209,29 +209,7 @@ class CostTrackingService:
             }
         )
     
-    async def log_crawling_cost(
-        self,
-        pages_crawled: int,
-        cost_per_page: float,
-        job_id: Optional[str] = None,
-        data_size_mb: Optional[float] = None
-    ) -> CostEntry:
-        """Helper method to log web crawling costs."""
-        cost_amount = pages_crawled * cost_per_page
-        
-        return await self.log_cost(
-            service="crawling",
-            operation="web-crawl",
-            cost_amount=cost_amount,
-            job_id=job_id,
-            requests_count=pages_crawled,
-            data_processed_mb=data_size_mb,
-            description=f"Crawled {pages_crawled} pages",
-            extra_data={
-                "pages_crawled": pages_crawled,
-                "cost_per_page": cost_per_page
-            }
-        )
+    # REMOVED: log_crawling_cost method - crawling is free (httpx + BeautifulSoup)
 
 
 def get_cost_tracking_service(db: Session = Depends(get_db)) -> CostTrackingService:
