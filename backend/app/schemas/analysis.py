@@ -1,8 +1,8 @@
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, HttpUrl, Field
-from datetime import datetime
+from pydantic import BaseModel, Field
+from pydantic import HttpUrl
 from uuid import UUID
-
+from datetime import datetime
 
 class AnalysisRequest(BaseModel):
     """Request schema for website analysis."""
@@ -81,6 +81,7 @@ class AnalysisStatusResponse(BaseModel):
     updated_at: datetime
     completed_at: Optional[datetime] = None
     error_message: Optional[str] = None
+    result: Optional[Dict] = None
     
     class Config:
         from_attributes = True

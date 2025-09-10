@@ -98,10 +98,17 @@ class AnalysisService:
     async def _update_job_status(self, db: AsyncSession, job_id: UUID, status: str, progress: int, message: str = None):
         """Update job status in database and cache."""
         # Update database
-        stmt = update(AnalysisJob).where(AnalysisJob.id == job_id).values(
-            status=status,
-            error_message=message if status == "failed" else None
-        )
+        update_values = {
+            "status": status,
+            "error_message": message if status == "failed" else None
+        }
+        
+        # Set completed_at when job is completed
+        if status == "completed":
+            from datetime import datetime, timezone
+            update_values["completed_at"] = datetime.now(timezone.utc)
+        
+        stmt = update(AnalysisJob).where(AnalysisJob.id == job_id).values(**update_values)
         await db.execute(stmt)
         await db.commit()
         
@@ -136,8 +143,8 @@ class AnalysisService:
         result = AnalysisResult(
             job_id=job_id,
             content_summary=analysis_data.get('content_summary'),
-            messaging_analysis=analysis_data.get('messaging_analysis').dict() if analysis_data.get('messaging_analysis') else None,
-            scores=analysis_data.get('scores').dict() if analysis_data.get('scores') else None,
+            messaging_analysis=analysis_data.get('messaging_analysis') if isinstance(analysis_data.get('messaging_analysis'), (dict, str)) else (analysis_data.get('messaging_analysis').dict() if analysis_data.get('messaging_analysis') else None),
+            scores=analysis_data.get('scores') if isinstance(analysis_data.get('scores'), (dict, str)) else (analysis_data.get('scores').dict() if analysis_data.get('scores') else None),
             quick_wins=analysis_data.get('quick_wins', []),
             raw_content=analysis_data.get('content_summary')
         )

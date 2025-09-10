@@ -66,7 +66,7 @@ export function CSSMirror({ children }: CSSMirrorProps) {
       </div>
 
       {/* Enhanced mirror container */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-4">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4">
         <motion.div
           initial={{ scale: 0.8, opacity: 0, rotateX: 15 }}
           animate={{ scale: 1, opacity: 1, rotateX: 0 }}
@@ -75,7 +75,7 @@ export function CSSMirror({ children }: CSSMirrorProps) {
           style={{ perspective: '1000px' }}
         >
           {/* Mirror frame with enhanced effects */}
-          <div className="relative bg-gradient-to-br from-gray-700/20 to-gray-900/40 backdrop-blur-2xl border-2 border-white/20 rounded-[2.5rem] p-16 shadow-[0_0_80px_rgba(59,130,246,0.3)] overflow-hidden">
+          <div className="relative bg-gradient-to-br from-gray-700/20 to-gray-900/40 backdrop-blur-2xl border-2 border-white/20 rounded-[2.5rem] p-20 shadow-[0_0_80px_rgba(59,130,246,0.3)] overflow-hidden">
             
             {/* Mirror surface with realistic reflections */}
             <div className="absolute inset-4 rounded-[2rem] overflow-hidden bg-gradient-to-br from-gray-800/60 to-gray-900/80 backdrop-blur-3xl">
@@ -180,7 +180,7 @@ export function CSSMirror({ children }: CSSMirrorProps) {
             />
 
             {/* Content with enhanced positioning */}
-            <div className="relative z-20 flex items-center justify-center min-h-[400px]">
+            <div className="relative z-20 flex items-center justify-center min-h-[520px]">
               {children}
             </div>
           </div>
