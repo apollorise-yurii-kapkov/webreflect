@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Github, Twitter, Heart } from 'lucide-react'
+import { Linkedin, Twitter, Heart, ExternalLink } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -9,48 +9,49 @@ export function Footer() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6, delay: 0.8 }}
-      className="mt-20 py-12 border-t border-border/20"
+      className="relative z-10 mt-20 py-12 bg-black/20 backdrop-blur-sm border-t border-white/10"
     >
       <div className="container mx-auto px-4">
         <div className="text-center space-y-6">
-          {/* Logo */}
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-8 h-8 mirror-frame flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-primary/60" />
-            </div>
-            <span className="text-lg font-display font-semibold">
-              Website Reflection
-            </span>
-          </div>
-
-          {/* Description */}
-          <p className="text-muted-foreground max-w-md mx-auto">
-            A free tool to analyze your website&apos;s messaging and discover what visitors actually hear.
-          </p>
-
-          {/* Links */}
+          {/* Social Links */}
           <div className="flex items-center justify-center gap-6">
             <a
-              href="#"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="GitHub"
+              href="https://www.linkedin.com/company/apollorise"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-blue-400 transition-colors"
+              aria-label="LinkedIn"
             >
-              <Github className="w-5 h-5" />
+              <Linkedin className="w-5 h-5" />
             </a>
             <a
-              href="#"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="Twitter"
+              href="https://x.com/ApolloRiseTech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-blue-400 transition-colors"
+              aria-label="X"
             >
-              <Twitter className="w-5 h-5" />
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
             </a>
           </div>
 
-          {/* Copyright */}
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          {/* Made with love */}
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
             <span>Made with</span>
-            <Heart className="w-4 h-4 text-red-500" />
-            <span>for better websites</span>
+            <Heart className="w-4 h-4 text-red-400 animate-pulse" />
+            <span>by the</span>
+            <a
+              href="https://apollorise.tech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-semibold hover:text-blue-400 transition-colors flex items-center gap-1"
+            >
+              ApolloRise
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            <span>team</span>
           </div>
         </div>
       </div>
