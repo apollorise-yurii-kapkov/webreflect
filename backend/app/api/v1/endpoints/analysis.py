@@ -63,16 +63,28 @@ async def get_analysis_status(
         cached_status = await analysis_service.get_job_status(job_id)
         progress = cached_status.get("progress", 0)
         
-        return AnalysisStatusResponse(
-            job_id=job.id,
-            url=job.url,
-            status=job.status,
-            progress=progress,
-            created_at=job.created_at,
-            updated_at=job.updated_at,
-            completed_at=job.completed_at,
-            error_message=job.error_message
-        )
+        # Build response data
+        response_data = {
+            "job_id": job.id,
+            "url": job.url,
+            "status": job.status,
+            "progress": progress,
+            "created_at": job.created_at,
+            "updated_at": job.updated_at,
+            "completed_at": job.completed_at,
+            "error_message": job.error_message
+        }
+        
+        # Include result data if job is completed
+        if job.status == "completed" and job.result:
+            response_data["result"] = {
+                "content_summary": job.result.content_summary,
+                "messaging_analysis": job.result.messaging_analysis,
+                "scores": job.result.scores,
+                "quick_wins": job.result.quick_wins
+            }
+        
+        return AnalysisStatusResponse(**response_data)
         
     except HTTPException:
         raise

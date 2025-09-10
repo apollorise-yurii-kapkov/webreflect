@@ -30,6 +30,12 @@ export interface AnalysisStatusResponse {
   updated_at: string
   completed_at?: string
   error_message?: string
+  result?: {
+    content_summary?: string
+    messaging_analysis?: MessagingAnalysis
+    scores?: MessagingScores
+    quick_wins?: string[]
+  }
 }
 
 export interface MessagingScores {

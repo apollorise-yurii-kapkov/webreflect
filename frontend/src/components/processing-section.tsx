@@ -61,26 +61,23 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
   }, [data.jobId, onComplete, onError])
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900" />
-      
-      {/* Animated particles */}
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
+      {/* Animated particles background */}
       <div className="absolute inset-0">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(50)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-blue-400/30 rounded-full"
+            className="absolute w-1 h-1 bg-blue-400/20 rounded-full"
             animate={{
-              x: [0, Math.random() * 200 - 100],
-              y: [0, Math.random() * 200 - 100],
+              x: [0, Math.random() * 300 - 150],
+              y: [0, Math.random() * 300 - 150],
               opacity: [0, 1, 0],
-              scale: [0, 1, 0],
+              scale: [0, 1.5, 0],
             }}
             transition={{
-              duration: Math.random() * 4 + 2,
+              duration: Math.random() * 6 + 3,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: Math.random() * 3,
             }}
             style={{
               left: `${Math.random() * 100}%`,
@@ -89,140 +86,210 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
           />
         ))}
       </div>
-
-      <div className="relative z-10 w-full max-w-4xl">
-        {/* Processing mirror */}
-        <motion.div
-          initial={{ scale: 1 }}
-          animate={{ 
-            scale: [1, 1.02, 1],
-            rotateY: [0, 2, -2, 0],
-          }}
-          transition={{ 
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="relative"
-        >
-          <div className="relative w-full h-[600px] rounded-3xl overflow-hidden bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-white/10">
-            {/* Dynamic background based on progress */}
-            <motion.div 
-              className="absolute inset-4 rounded-2xl blur-2xl"
-              animate={{
-                background: [
-                  'linear-gradient(45deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2))',
-                  'linear-gradient(45deg, rgba(147, 51, 234, 0.2), rgba(236, 72, 153, 0.2))',
-                  'linear-gradient(45deg, rgba(236, 72, 153, 0.2), rgba(59, 130, 246, 0.2))',
-                ]
-              }}
-              transition={{ duration: 3, repeat: Infinity }}
-            />
-            
-            {/* Scanning effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent"
-              animate={{
-                x: [-200, 600],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-
-            {/* Content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-              {/* URL being analyzed */}
+      
+      {/* Content */}
+      <div className="relative z-10 flex items-center justify-center p-8 min-h-screen">
+        <div className="w-full max-w-4xl">
+          {/* Processing Mirror */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ 
+              scale: 1,
+              opacity: 1,
+            }}
+            transition={{ 
+              duration: 0.8,
+              ease: "easeOut"
+            }}
+            className="relative"
+          >
+            <div className="relative w-full h-[780px] rounded-3xl overflow-hidden bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-xl border border-white/20 shadow-2xl">
+              {/* Dynamic scanning effect */}
               <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-8"
-              >
-                <p className="text-gray-400 text-sm mb-2">Analyzing</p>
-                <p className="text-white text-lg font-medium">{data.url}</p>
-              </motion.div>
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/10 to-transparent"
+                animate={{
+                  x: [-300, 700],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              />
+              
+              {/* Pulsing glow effect */}
+              <motion.div 
+                className="absolute inset-4 rounded-2xl blur-3xl"
+                animate={{
+                  background: [
+                    'linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))',
+                    'linear-gradient(45deg, rgba(147, 51, 234, 0.2), rgba(236, 72, 153, 0.1))',
+                    'linear-gradient(45deg, rgba(236, 72, 153, 0.1), rgba(59, 130, 246, 0.2))',
+                  ]
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+              />
 
-              {/* Progress circle */}
-              <div className="relative w-32 h-32 mb-8">
-                <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    stroke="rgba(255,255,255,0.1)"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                  <motion.circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    stroke="rgba(59, 130, 246, 0.8)"
-                    strokeWidth="2"
-                    fill="none"
-                    strokeLinecap="round"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: progress / 100 }}
-                    transition={{ duration: 0.5 }}
-                    style={{
-                      strokeDasharray: "283",
-                      strokeDashoffset: 283 - (283 * progress) / 100,
+              {/* Content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
+                {/* URL being analyzed */}
+                <motion.div
+                  initial={{ opacity: 0, y: -30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="mb-12"
+                >
+                  <motion.p 
+                    className="text-gray-300 text-sm mb-3 tracking-wider uppercase"
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    Analyzing Website
+                  </motion.p>
+                  <p className="text-white text-xl font-light max-w-2xl break-all">{data.url}</p>
+                </motion.div>
+
+                {/* Enhanced Progress Circle */}
+                <div className="relative w-40 h-40 mb-12">
+                  {/* Outer glow ring */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    animate={{
+                      boxShadow: [
+                        '0 0 20px rgba(59, 130, 246, 0.3)',
+                        '0 0 40px rgba(59, 130, 246, 0.5)',
+                        '0 0 20px rgba(59, 130, 246, 0.3)',
+                      ]
                     }}
+                    transition={{ duration: 2, repeat: Infinity }}
                   />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-white text-xl font-medium">{Math.round(progress)}%</span>
+                  
+                  <svg className="w-40 h-40 transform -rotate-90" viewBox="0 0 100 100">
+                    {/* Background circle */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="42"
+                      stroke="rgba(255,255,255,0.1)"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                    {/* Progress circle */}
+                    <motion.circle
+                      cx="50"
+                      cy="50"
+                      r="42"
+                      stroke="url(#progressGradient)"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: progress / 100 }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      style={{
+                        strokeDasharray: "264",
+                        strokeDashoffset: 264 - (264 * progress) / 100,
+                      }}
+                    />
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(59, 130, 246, 0.9)" />
+                        <stop offset="50%" stopColor="rgba(147, 51, 234, 0.9)" />
+                        <stop offset="100%" stopColor="rgba(236, 72, 153, 0.9)" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  
+                  {/* Progress text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <motion.span 
+                      className="text-white text-2xl font-light mb-1"
+                      key={progress}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {Math.round(progress)}%
+                    </motion.span>
+                    <span className="text-gray-400 text-xs tracking-wider uppercase">Complete</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Current step */}
-              <motion.div
-                key={currentStep}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="text-center"
-              >
-                <p className="text-blue-400 text-lg font-medium mb-2">
-                  {processingSteps[currentStep]?.label}
-                </p>
-                <div className="flex justify-center space-x-1">
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.6, repeat: Infinity }}
-                    className="w-2 h-2 bg-blue-400 rounded-full"
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-                    className="w-2 h-2 bg-blue-400 rounded-full"
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-                    className="w-2 h-2 bg-blue-400 rounded-full"
-                  />
+                {/* Current step with enhanced animation */}
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-center mb-8"
+                >
+                  <motion.p 
+                    className="text-blue-300 text-xl font-light mb-4"
+                    animate={{ opacity: [0.8, 1, 0.8] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    {processingSteps[currentStep]?.label}
+                  </motion.p>
+                  
+                  {/* Animated dots */}
+                  <div className="flex justify-center space-x-2">
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        animate={{ 
+                          scale: [1, 1.4, 1],
+                          opacity: [0.5, 1, 0.5]
+                        }}
+                        transition={{ 
+                          duration: 1.2, 
+                          repeat: Infinity,
+                          delay: i * 0.2
+                        }}
+                        className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Enhanced Steps indicator */}
+                <div className="flex justify-center space-x-6">
+                  {processingSteps.map((step, index) => (
+                    <motion.div
+                      key={step.id}
+                      className="flex flex-col items-center space-y-2"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <motion.div
+                        className={`w-4 h-4 rounded-full transition-all duration-700 ${
+                          index <= currentStep 
+                            ? 'bg-gradient-to-r from-blue-400 to-purple-400 shadow-lg' 
+                            : 'bg-white/20'
+                        }`}
+                        animate={index === currentStep ? {
+                          scale: [1, 1.2, 1],
+                          boxShadow: [
+                            '0 0 10px rgba(59, 130, 246, 0.5)',
+                            '0 0 20px rgba(59, 130, 246, 0.8)',
+                            '0 0 10px rgba(59, 130, 246, 0.5)',
+                          ]
+                        } : {}}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      />
+                      <span className={`text-xs transition-colors duration-500 ${
+                        index <= currentStep ? 'text-white' : 'text-gray-500'
+                      }`}>
+                        {step.label.split(' ')[0]}
+                      </span>
+                    </motion.div>
+                  ))}
                 </div>
-              </motion.div>
-
-              {/* Steps indicator */}
-              <div className="mt-12 flex justify-center space-x-4">
-                {processingSteps.map((step, index) => (
-                  <div
-                    key={step.id}
-                    className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                      index <= currentStep 
-                        ? 'bg-blue-400 shadow-lg shadow-blue-400/50' 
-                        : 'bg-white/20'
-                    }`}
-                  />
-                ))}
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </div>
   )
