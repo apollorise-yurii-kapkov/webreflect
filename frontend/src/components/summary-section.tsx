@@ -148,17 +148,60 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
                 try {
                   const { jsPDF } = await import('jspdf')
                   const pdf = new jsPDF()
+                  const pageHeight = pdf.internal.pageSize.height
+                  const margin = 10
+                  const maxY = pageHeight - 30
+                  let yPos = 30
                   
-                  // Add content to PDF
-                  pdf.setFontSize(20)
-                  pdf.text('Website Analysis Report', 20, 30)
+                  // Function to add text with page breaks
+                  const addTextWithBreaks = (text: string, fontSize: number = 12, isBold: boolean = false) => {
+                    pdf.setFontSize(fontSize)
+                    pdf.setFont('helvetica', isBold ? 'bold' : 'normal')
+                    
+                    const lines = pdf.splitTextToSize(text, 180)
+                    
+                    for (let i = 0; i < lines.length; i++) {
+                      // Check if we need a new page
+                      if (yPos > maxY - 15) {
+                        pdf.addPage()
+                        yPos = 30
+                      }
+                      
+                      pdf.text(lines[i], margin, yPos)
+                      yPos += fontSize * 0.25 + 2 // Reduced spacing by half
+                    }
+                  }
                   
-                  pdf.setFontSize(12)
-                  pdf.text(`URL: ${data.url}`, 20, 50)
+                  // Add spacing
+                  const addSpacing = (space: number = 10) => {
+                    yPos += space
+                    if (yPos > maxY - 20) {
+                      pdf.addPage()
+                      yPos = 30
+                    }
+                  }
                   
-                  // Split long text into lines
-                  const lines = pdf.splitTextToSize(analysisText, 170)
-                  pdf.text(lines, 20, 70)
+                  // Header
+                  addTextWithBreaks('Website Analysis Report', 20, true)
+                  addSpacing(15)
+                  
+                  addTextWithBreaks(`URL: ${data.url}`, 12)
+                  addTextWithBreaks(`Generated: ${new Date().toLocaleDateString()}`, 12)
+                  addSpacing(20)
+                  
+                  // Main content
+                  if (analysisText) {
+                    addTextWithBreaks(analysisText, 10)
+                  }
+                  
+                  // Add page numbers
+                  const pageCount = (pdf as any).internal.getNumberOfPages()
+                  
+                  for (let i = 1; i <= pageCount; i++) {
+                    pdf.setPage(i)
+                    pdf.setFontSize(10)
+                    pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.width - 40, pdf.internal.pageSize.height - 10)
+                  }
                   
                   pdf.save(`website-analysis-${new Date().toISOString().split('T')[0]}.pdf`)
                 } catch (error) {

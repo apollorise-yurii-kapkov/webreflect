@@ -30,7 +30,7 @@ def create_application() -> FastAPI:
     )
 
     # Rate limiting middleware (first)
-    app.middleware("http")(RateLimitMiddleware(calls=10, period=60))
+    app.middleware("http")(RateLimitMiddleware(calls=100, period=60))
     
     # Security middleware
     app.add_middleware(

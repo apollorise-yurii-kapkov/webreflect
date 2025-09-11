@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     MAX_CONTENT_LENGTH: int = 50000
     
     # AI Analysis settings
-    MAX_TOKENS_PER_ANALYSIS: int = 4000
+    MAX_TOKENS_PER_ANALYSIS: int = 1000
     ANALYSIS_MODEL: str = "gpt-5-nano"
     
     class Config:

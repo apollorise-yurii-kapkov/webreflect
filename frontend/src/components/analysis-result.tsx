@@ -84,35 +84,86 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
 
   const generatePDF = () => {
     const pdf = new jsPDF()
+    const pageHeight = pdf.internal.pageSize.height
+    const margin = 20
+    const maxY = pageHeight - 30
+    let yPos = 30
+    
+    console.log('=== PDF Generation Debug ===')
+    console.log('Page height:', pageHeight)
+    console.log('Max Y:', maxY)
+    console.log('Initial yPos:', yPos)
+    
+    // Simple function to add text with page breaks
+    const addTextWithBreaks = (text: string, fontSize: number = 12, isBold: boolean = false) => {
+      console.log(`\n--- Adding text: "${text.substring(0, 50)}..." ---`)
+      console.log('Font size:', fontSize, 'Bold:', isBold)
+      console.log('Current yPos before:', yPos)
+      
+      pdf.setFontSize(fontSize)
+      pdf.setFont(undefined, isBold ? 'bold' : 'normal')
+      
+      const lines = pdf.splitTextToSize(text, 170)
+      console.log('Text split into', lines.length, 'lines')
+      
+      for (let i = 0; i < lines.length; i++) {
+        console.log(`Line ${i + 1}: yPos=${yPos}, maxY-15=${maxY - 15}, needsNewPage=${yPos > maxY - 15}`)
+        
+        // Check if we need a new page
+        if (yPos > maxY - 15) {
+          console.log('*** ADDING NEW PAGE ***')
+          pdf.addPage()
+          yPos = 30
+          console.log('Reset yPos to:', yPos)
+        }
+        
+        pdf.text(lines[i], margin, yPos)
+        const oldYPos = yPos
+        yPos += fontSize * 0.5 + 3
+        console.log(`Added line, yPos: ${oldYPos} -> ${yPos}`)
+      }
+      
+      console.log('Final yPos after text:', yPos)
+    }
+    
+    // Add spacing
+    const addSpacing = (space: number = 10) => {
+      console.log(`\n--- Adding spacing: ${space} ---`)
+      console.log('yPos before spacing:', yPos)
+      
+      yPos += space
+      console.log('yPos after spacing:', yPos)
+      console.log('Check: yPos > maxY-20?', yPos, '>', maxY - 20, '=', yPos > maxY - 20)
+      
+      if (yPos > maxY - 20) {
+        console.log('*** ADDING NEW PAGE (spacing) ***')
+        pdf.addPage()
+        yPos = 30
+        console.log('Reset yPos to:', yPos)
+      }
+    }
     
     // Header
-    pdf.setFontSize(20)
-    pdf.text('Website Reflection Analysis', 20, 30)
+    addTextWithBreaks('Website Reflection Analysis', 20, true)
+    addSpacing(15)
     
-    pdf.setFontSize(12)
-    pdf.text(`URL: ${data.url}`, 20, 45)
-    pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 55)
-    
-    let yPos = 75
+    addTextWithBreaks(`URL: ${data.url}`, 12)
+    addTextWithBreaks(`Generated: ${new Date().toLocaleDateString()}`, 12)
+    addSpacing(20)
     
     // Overall Score
     if (scores) {
-      pdf.setFontSize(16)
-      pdf.text('Overall Score', 20, yPos)
-      yPos += 15
-      
-      pdf.setFontSize(24)
-      pdf.text(`${scores.overall}/100`, 20, yPos)
-      yPos += 25
+      addTextWithBreaks('Overall Score', 16, true)
+      addSpacing(10)
+      addTextWithBreaks(`${scores.overall}/100`, 24, true)
+      addSpacing(20)
     }
     
     // Individual Scores
     if (scores) {
-      pdf.setFontSize(16)
-      pdf.text('Detailed Scores', 20, yPos)
-      yPos += 15
+      addTextWithBreaks('Detailed Scores', 16, true)
+      addSpacing(10)
       
-      pdf.setFontSize(12)
       const scoreItems = [
         { name: 'Clarity', value: scores.clarity },
         { name: 'Consistency', value: scores.consistency },
@@ -123,37 +174,58 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
       ]
       
       scoreItems.forEach(item => {
-        pdf.text(`${item.name}: ${item.value}/100`, 20, yPos)
-        yPos += 10
+        addTextWithBreaks(`${item.name}: ${item.value}/100`, 12)
       })
-      yPos += 10
+      addSpacing(20)
     }
     
     // Content Summary
     if (result?.content_summary) {
-      pdf.setFontSize(16)
-      pdf.text('Content Summary', 20, yPos)
-      yPos += 15
-      
-      pdf.setFontSize(10)
-      const summaryLines = pdf.splitTextToSize(result.content_summary, 170)
-      pdf.text(summaryLines, 20, yPos)
-      yPos += summaryLines.length * 5 + 15
+      addTextWithBreaks('Content Summary', 16, true)
+      addSpacing(10)
+      addTextWithBreaks(result.content_summary, 10)
+      addSpacing(20)
+    }
+    
+    // Messaging Analysis
+    if (result?.messaging_analysis) {
+      addTextWithBreaks('Messaging Analysis', 16, true)
+      addSpacing(10)
+      addTextWithBreaks(result.messaging_analysis, 10)
+      addSpacing(20)
     }
     
     // Quick Wins
     if (quickWins.length > 0) {
-      pdf.setFontSize(16)
-      pdf.text('Quick Wins', 20, yPos)
-      yPos += 15
+      addTextWithBreaks('Quick Wins', 16, true)
+      addSpacing(10)
       
-      pdf.setFontSize(10)
       quickWins.forEach((win: string, index: number) => {
-        const winLines = pdf.splitTextToSize(`${index + 1}. ${win}`, 170)
-        pdf.text(winLines, 20, yPos)
-        yPos += winLines.length * 5 + 5
+        addTextWithBreaks(`${index + 1}. ${win}`, 10)
+        addSpacing(5)
       })
     }
+    
+    // Force a test page break to ensure pagination works
+    console.log('\n--- FORCING TEST PAGE BREAK ---')
+    pdf.addPage()
+    console.log('Added test page')
+    pdf.setFontSize(12)
+    pdf.text('Test Page 2 - If you see this, pagination is working!', margin, 50)
+    
+    // Add page numbers
+    const pageCount = pdf.internal.getNumberOfPages()
+    console.log('\n--- FINAL PDF INFO ---')
+    console.log('Total pages:', pageCount)
+    console.log('Final yPos:', yPos)
+    
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i)
+      pdf.setFontSize(10)
+      pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.width - 40, pdf.internal.pageSize.height - 10)
+    }
+    
+    console.log('=== PDF Generation Complete ===')
     
     pdf.save(`website-analysis-${new Date().toISOString().split('T')[0]}.pdf`)
     
