@@ -7,7 +7,7 @@ import asyncio
 class RateLimitMiddleware:
     """Simple in-memory rate limiting middleware."""
     
-    def __init__(self, calls: int = 10, period: int = 60):
+    def __init__(self, calls: int = 100, period: int = 60):
         self.calls = calls  # Max calls per period
         self.period = period  # Period in seconds
         self.clients: Dict[str, Dict] = {}

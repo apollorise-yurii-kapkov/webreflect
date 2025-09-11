@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     
     # AI Analysis settings
     MAX_TOKENS_PER_ANALYSIS: int = 4000
-    ANALYSIS_MODEL: str = "gpt-3.5-turbo"
+    ANALYSIS_MODEL: str = "gpt-5-nano"
     
     class Config:
         env_file = ".env"
