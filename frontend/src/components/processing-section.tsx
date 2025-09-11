@@ -51,8 +51,8 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
       }
     }
 
-    // Start polling every 10 seconds to avoid rate limiting
-    interval = setInterval(pollStatus, 10000)
+    // Start polling every 5 seconds to avoid rate limiting
+    interval = setInterval(pollStatus, 5000)
     pollStatus() // Initial call
 
     return () => {

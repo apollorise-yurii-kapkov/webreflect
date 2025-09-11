@@ -1,7 +1,6 @@
-from typing import Dict
+from typing import Dict, Any
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -11,11 +10,11 @@ from app.schemas.analysis import (
     AnalysisRequest,
     AnalysisJobResponse,
     AnalysisStatusResponse,
-    AnalysisResultResponse
+    AnalysisResultResponse,
 )
 
 router = APIRouter()
-analysis_service = AnalysisService()
+service = AnalysisService()
 
 
 @router.post("/reflect", response_model=AnalysisJobResponse)
@@ -23,30 +22,22 @@ async def start_website_analysis(
     request: AnalysisRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
 ):
-    """Start website analysis process."""
+    """Start a website analysis job; return job id immediately."""
     try:
-        # Create analysis job
-        job = await analysis_service.create_analysis_job(db, str(request.url))
-        
-        # Start background processing
-        background_tasks.add_task(
-            analysis_service.process_analysis_job,
-            db,
-            job.id
-        )
-        
+        job = await service.create_analysis_job(db, str(request.url))
+        # ВАЖНО: НЕ передаём db в фоновую задачу!
+        background_tasks.add_task(service.process_analysis_job, job.id)
         return AnalysisJobResponse(
             job_id=job.id,
             url=job.url,
             status=job.status,
-            created_at=job.created_at
+            created_at=job.created_at,
         )
-        
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to start analysis")
 
 
@@ -54,21 +45,18 @@ async def start_website_analysis(
 async def get_analysis_status(
     job_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
 ):
-    """Get analysis job status."""
+    """Return current status (with partial result if completed)."""
     try:
-        # Get job from database
-        job = await analysis_service.get_analysis_job(db, job_id)
+        job = await service.get_analysis_job(db, job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
-        
-        # Get cached status for progress
-        cached_status = await analysis_service.get_job_status(job_id)
-        progress = cached_status.get("progress", 0)
-        
-        # Build response data
-        response_data = {
+
+        cached = await service.get_job_status(job_id)
+        progress = cached.get("progress", 0)
+
+        data: Dict[str, Any] = {
             "job_id": job.id,
             "url": job.url,
             "status": job.status,
@@ -76,93 +64,82 @@ async def get_analysis_status(
             "created_at": job.created_at,
             "updated_at": job.updated_at,
             "completed_at": job.completed_at,
-            "error_message": job.error_message
+            "error_message": job.error_message,
         }
-        
-        # Include result data if job is completed
+
         if job.status == "completed" and job.result:
-            response_data["result"] = {
+            data["result"] = {
                 "content_summary": job.result.content_summary,
                 "messaging_analysis": job.result.messaging_analysis,
                 "scores": job.result.scores,
-                "quick_wins": job.result.quick_wins
+                "quick_wins": job.result.quick_wins,
             }
-        
-        return AnalysisStatusResponse(**response_data)
-        
+
+        return AnalysisStatusResponse(**data)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to get job status")
 
 
 @router.get("/reflect/{job_id}/result", response_model=AnalysisResultResponse)
 async def get_analysis_result(
     job_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
-    """Get complete analysis result."""
+    """Get the final analysis result."""
     try:
-        # Get job with results
-        job = await analysis_service.get_analysis_job(db, job_id)
+        job = await service.get_analysis_job(db, job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
-        
         if job.status != "completed":
             raise HTTPException(status_code=400, detail="Analysis not completed yet")
-        
-        # Build response
-        result_data = {
+
+        result: Dict[str, Any] = {
             "job_id": job.id,
             "url": job.url,
             "status": job.status,
             "completed_at": job.completed_at,
-            "error_message": job.error_message
+            "error_message": job.error_message,
         }
-        
         if job.result:
-            result_data.update({
+            result.update({
                 "content_summary": job.result.content_summary,
                 "messaging_analysis": job.result.messaging_analysis,
                 "scores": job.result.scores,
-                "quick_wins": job.result.quick_wins
+                "quick_wins": job.result.quick_wins,
             })
-        
-        return AnalysisResultResponse(**result_data)
-        
+        return AnalysisResultResponse(**result)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to get analysis result")
 
 
 @router.get("/reflect/{job_id}/pages")
 async def get_crawled_pages(
     job_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
-    """Get crawled pages for a job."""
+    """Get crawled pages (without raw HTML)."""
     try:
-        job = await analysis_service.get_analysis_job(db, job_id)
+        job = await service.get_analysis_job(db, job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
-        
-        pages_data = []
-        for page in job.pages:
-            pages_data.append({
-                "url": page.url,
-                "title": page.title,
-                "meta_description": page.meta_description,
-                "h1_tags": page.h1_tags,
-                "cta_texts": page.cta_texts,
-                "crawled_at": page.crawled_at
-            })
-        
+
+        pages_data = [{
+            "url": p.url,
+            "title": p.title,
+            "meta_description": p.meta_description,
+            "h1_tags": p.h1_tags,
+            "cta_texts": p.cta_texts,
+            "crawled_at": p.crawled_at,
+        } for p in job.pages]
+
         return {"pages": pages_data}
-        
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to get crawled pages")
 
 
@@ -170,44 +147,38 @@ async def get_crawled_pages(
 async def share_analysis_report(
     job_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
 ):
-    """Mark analysis report as shared (publicly accessible)."""
+    """Make a completed analysis report publicly accessible."""
     try:
-        job = await analysis_service.get_analysis_job(db, job_id)
+        job = await service.get_analysis_job(db, job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
-        
         if job.status != "completed":
             raise HTTPException(status_code=400, detail="Cannot share incomplete analysis")
-        
-        # Mark as shared
-        await analysis_service.share_analysis_job(db, job_id)
-        
+
+        await service.share_analysis_job(db, job_id)
         return {"shared": True}
-        
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to share analysis report")
 
 
 @router.get("/shared/{job_id}", response_model=AnalysisStatusResponse)
 async def get_shared_analysis_report(
     job_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
-    """Get shared analysis report (no authentication required)."""
+    """Public endpoint to fetch a shared completed report."""
     try:
-        job = await analysis_service.get_analysis_job(db, job_id)
+        job = await service.get_analysis_job(db, job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Report not found")
-        
         if job.status != "completed":
             raise HTTPException(status_code=400, detail="Analysis not completed")
-        
-        # Build response data
-        response_data = {
+
+        data: Dict[str, Any] = {
             "job_id": job.id,
             "url": job.url,
             "status": job.status,
@@ -215,21 +186,18 @@ async def get_shared_analysis_report(
             "created_at": job.created_at,
             "updated_at": job.updated_at,
             "completed_at": job.completed_at,
-            "error_message": job.error_message
+            "error_message": job.error_message,
         }
-        
-        # Include result data
         if job.result:
-            response_data["result"] = {
+            data["result"] = {
                 "content_summary": job.result.content_summary,
                 "messaging_analysis": job.result.messaging_analysis,
                 "scores": job.result.scores,
-                "quick_wins": job.result.quick_wins
+                "quick_wins": job.result.quick_wins,
             }
-        
-        return AnalysisStatusResponse(**response_data)
-        
+        return AnalysisStatusResponse(**data)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
+        # Важно: здесь НЕ должно быть опечатки "status code"
         raise HTTPException(status_code=500, detail="Failed to get shared report")

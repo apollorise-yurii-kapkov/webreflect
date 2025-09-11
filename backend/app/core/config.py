@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     
     # Crawling settings
     MAX_PAGES_PER_SITE: int = 30
-    CRAWL_TIMEOUT: int = 30
+    CRAWL_TIMEOUT: int = 60
     MAX_CONTENT_LENGTH: int = 100000
     
     # AI Analysis settings

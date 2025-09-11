@@ -4,7 +4,16 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
-  timeout: 30000,
+  timeout: 20000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Basic ' + btoa('admin:secure_password_2024'),
+  },
+})
+
+const pollingApi = axios.create({
+  baseURL: `${API_BASE_URL}/api/v1`,
+  timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
     'Authorization': 'Basic ' + btoa('admin:secure_password_2024'),
@@ -20,23 +29,6 @@ export interface AnalysisJobResponse {
   url: string
   status: string
   created_at: string
-}
-
-export interface AnalysisStatusResponse {
-  job_id: string
-  url: string
-  status: string
-  progress: number
-  created_at: string
-  updated_at: string
-  completed_at?: string
-  error_message?: string
-  result?: {
-    content_summary?: string
-    messaging_analysis?: MessagingAnalysis
-    scores?: MessagingScores
-    quick_wins?: string[]
-  }
 }
 
 export interface MessagingScores {
@@ -59,6 +51,23 @@ export interface MessagingAnalysis {
   weaknesses: string[]
 }
 
+export interface AnalysisStatusResponse {
+  job_id: string
+  url: string
+  status: string
+  progress: number
+  created_at: string
+  updated_at: string
+  completed_at?: string
+  error_message?: string
+  result?: {
+    content_summary?: string
+    messaging_analysis?: MessagingAnalysis
+    scores?: MessagingScores
+    quick_wins?: string[]
+  }
+}
+
 export interface AnalysisResultResponse {
   job_id: string
   url: string
@@ -72,39 +81,28 @@ export interface AnalysisResultResponse {
 }
 
 export const analysisApi = {
-  // Start website analysis
   startAnalysis: async (data: AnalysisRequest): Promise<AnalysisJobResponse> => {
-    const response = await api.post('/analysis/reflect', data)
+    const response = await api.post('/analysis/reflect', data, { timeout: 15000 })
     return response.data
   },
-
-  // Get analysis status
   getAnalysisStatus: async (jobId: string): Promise<AnalysisStatusResponse> => {
-    const response = await api.get(`/analysis/reflect/${jobId}/status`)
+    const response = await pollingApi.get(`/analysis/reflect/${jobId}/status`)
     return response.data
   },
-
-  // Get analysis result
   getAnalysisResult: async (jobId: string): Promise<AnalysisResultResponse> => {
-    const response = await api.get(`/analysis/reflect/${jobId}/result`)
+    const response = await api.get(`/analysis/reflect/${jobId}/result`, { timeout: 30000 })
     return response.data
   },
-
-  // Get crawled pages
   getCrawledPages: async (jobId: string): Promise<any> => {
-    const response = await api.get(`/analysis/reflect/${jobId}/pages`)
+    const response = await api.get(`/analysis/reflect/${jobId}/pages`, { timeout: 30000 })
     return response.data
   },
-
-  // Share analysis report (makes it publicly accessible)
   shareReport: async (jobId: string): Promise<{ shared: boolean }> => {
-    const response = await api.post(`/analysis/reflect/${jobId}/share`)
+    const response = await api.post(`/analysis/reflect/${jobId}/share`, {}, { timeout: 15000 })
     return response.data
   },
-
-  // Get shared report (publicly accessible)
   getSharedReport: async (jobId: string): Promise<AnalysisStatusResponse> => {
-    const response = await api.get(`/analysis/shared/${jobId}`)
+    const response = await api.get(`/analysis/shared/${jobId}`, { timeout: 30000 })
     return response.data
   },
 }
