@@ -18,7 +18,7 @@ class WebsiteCrawler:
         self.max_content_length = settings.MAX_CONTENT_LENGTH
     
     async def crawl_website(self, url: str) -> List[Dict]:
-        """Crawl website and extract content from multiple pages."""
+        """Crawl website and extract content from multiple pages using breadth-first approach."""
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 # Get main page first
@@ -29,29 +29,48 @@ class WebsiteCrawler:
                 pages = [main_page]
                 crawled_urls = {url}
                 
-                # Try to get sitemap for comprehensive page discovery
-                sitemap_urls = await self._get_sitemap_urls(client, url)
+                # Breadth-first crawling by levels
+                current_level_urls = [url]
+                level = 0
                 
-                # Extract internal links from main page
-                internal_links = self._extract_internal_links(url, main_page.get('raw_html', ''))
-                
-                # Prioritize navigation and important pages
-                prioritized_links = self._prioritize_links(internal_links, main_page.get('raw_html', ''))
-                
-                # Combine sitemap URLs with discovered links, prioritizing sitemap
-                all_links = list(dict.fromkeys(sitemap_urls + prioritized_links))  # Remove duplicates, keep order
-                
-                # Crawl additional pages (limited)
-                for link in all_links[:self.max_pages - 1]:
-                    if link not in crawled_urls:
-                        try:
-                            page = await self._crawl_page(client, link)
-                            if page:
-                                pages.append(page)
-                                crawled_urls.add(link)
-                        except Exception as e:
-                            print(f"Error crawling {link}: {e}")
-                            continue
+                while len(pages) < self.max_pages and current_level_urls and level < 3:  # Max 3 levels deep
+                    next_level_urls = []
+                    
+                    # Process all URLs at current level
+                    for current_url in current_level_urls:
+                        if len(pages) >= self.max_pages:
+                            break
+                            
+                        # Get page content if not already crawled
+                        if current_url not in crawled_urls:
+                            try:
+                                page = await self._crawl_page(client, current_url)
+                                if page:
+                                    pages.append(page)
+                                    crawled_urls.add(current_url)
+                                    
+                                    # Extract links for next level
+                                    internal_links = self._extract_internal_links(current_url, page.get('raw_html', ''))
+                                    for link in internal_links:
+                                        if link not in crawled_urls and link not in next_level_urls:
+                                            next_level_urls.append(link)
+                            except Exception as e:
+                                print(f"Error crawling page {current_url}: {e}")
+                                # Continue to next page instead of stopping
+                                continue
+                        else:
+                            # Still extract links from already crawled pages for next level
+                            for page in pages:
+                                if page.get('url') == current_url:
+                                    internal_links = self._extract_internal_links(current_url, page.get('raw_html', ''))
+                                    for link in internal_links:
+                                        if link not in crawled_urls and link not in next_level_urls:
+                                            next_level_urls.append(link)
+                                    break
+                    
+                    # Move to next level
+                    current_level_urls = next_level_urls[:self.max_pages - len(pages)]  # Limit URLs per level
+                    level += 1
                 
                 return pages
                 
@@ -116,6 +135,7 @@ class WebsiteCrawler:
             
         except Exception as e:
             print(f"Error crawling page {url}: {e}")
+            # Return None to skip this page and continue with others
             return None
     
     def _extract_internal_links(self, base_url: str, html: str) -> List[str]:

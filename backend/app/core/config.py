@@ -46,11 +46,11 @@ class Settings(BaseSettings):
     # Crawling settings
     MAX_PAGES_PER_SITE: int = 30
     CRAWL_TIMEOUT: int = 30
-    MAX_CONTENT_LENGTH: int = 50000
+    MAX_CONTENT_LENGTH: int = 100000
     
     # AI Analysis settings
-    MAX_TOKENS_PER_ANALYSIS: int = 4000
-    ANALYSIS_MODEL: str = "gpt-3.5-turbo"
+    MAX_TOKENS_PER_ANALYSIS: int = 100000
+    ANALYSIS_MODEL: str = "gpt-5-nano"
     
     class Config:
         env_file = ".env"

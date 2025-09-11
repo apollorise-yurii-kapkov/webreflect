@@ -96,8 +96,6 @@ class WebsiteAnalyzer:
                     {"role": "system", "content": "You are a professional content analyst. Provide objective, factual summaries without subjective evaluations or recommendations."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=1500,
-                temperature=0.1
             )
             
             # Log OpenAI API cost if job_id is provided
@@ -113,7 +111,7 @@ class WebsiteAnalyzer:
                 total_tokens = usage.total_tokens
                 
                 # Get cost per token for the model
-                model_costs = OPENAI_COSTS.get(PRIMARY_MODEL, OPENAI_COSTS.get("gpt-3.5-turbo"))
+                model_costs = OPENAI_COSTS.get(PRIMARY_MODEL, OPENAI_COSTS.get("gpt-5-nano"))
                 input_cost_per_token = model_costs.get("input", 0.0000005)
                 output_cost_per_token = model_costs.get("output", 0.0000015)
                 
@@ -209,7 +207,7 @@ class WebsiteAnalyzer:
                     {"role": "system", "content": "You are an expert marketing analyst specializing in website messaging analysis. Provide detailed, actionable insights."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=1500,
+                max_completion_tokens=2000,
                 temperature=0.3,
                 response_format={
                     "type": "json_schema",
@@ -304,7 +302,7 @@ class WebsiteAnalyzer:
                     {"role": "system", "content": "You are a marketing analyst. Provide objective numerical scores based on the content quality and effectiveness."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=500,
+                max_completion_tokens=1000,
                 temperature=0.1,
                 response_format={
                     "type": "json_schema",
@@ -392,7 +390,7 @@ class WebsiteAnalyzer:
                     {"role": "system", "content": "You are a conversion optimization expert. Provide specific, actionable recommendations."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=800,
+                max_completion_tokens=1000,
                 temperature=0.2,
                 response_format={
                     "type": "json_schema",
