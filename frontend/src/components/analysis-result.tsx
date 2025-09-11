@@ -89,57 +89,31 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
     const maxY = pageHeight - 30
     let yPos = 30
     
-    console.log('=== PDF Generation Debug ===')
-    console.log('Page height:', pageHeight)
-    console.log('Max Y:', maxY)
-    console.log('Initial yPos:', yPos)
-    
     // Simple function to add text with page breaks
     const addTextWithBreaks = (text: string, fontSize: number = 12, isBold: boolean = false) => {
-      console.log(`\n--- Adding text: "${text.substring(0, 50)}..." ---`)
-      console.log('Font size:', fontSize, 'Bold:', isBold)
-      console.log('Current yPos before:', yPos)
-      
       pdf.setFontSize(fontSize)
       pdf.setFont(undefined, isBold ? 'bold' : 'normal')
       
       const lines = pdf.splitTextToSize(text, 170)
-      console.log('Text split into', lines.length, 'lines')
       
       for (let i = 0; i < lines.length; i++) {
-        console.log(`Line ${i + 1}: yPos=${yPos}, maxY-15=${maxY - 15}, needsNewPage=${yPos > maxY - 15}`)
-        
         // Check if we need a new page
         if (yPos > maxY - 15) {
-          console.log('*** ADDING NEW PAGE ***')
           pdf.addPage()
           yPos = 30
-          console.log('Reset yPos to:', yPos)
         }
         
         pdf.text(lines[i], margin, yPos)
-        const oldYPos = yPos
         yPos += fontSize * 0.5 + 3
-        console.log(`Added line, yPos: ${oldYPos} -> ${yPos}`)
       }
-      
-      console.log('Final yPos after text:', yPos)
     }
     
     // Add spacing
     const addSpacing = (space: number = 10) => {
-      console.log(`\n--- Adding spacing: ${space} ---`)
-      console.log('yPos before spacing:', yPos)
-      
       yPos += space
-      console.log('yPos after spacing:', yPos)
-      console.log('Check: yPos > maxY-20?', yPos, '>', maxY - 20, '=', yPos > maxY - 20)
-      
       if (yPos > maxY - 20) {
-        console.log('*** ADDING NEW PAGE (spacing) ***')
         pdf.addPage()
         yPos = 30
-        console.log('Reset yPos to:', yPos)
       }
     }
     
@@ -207,25 +181,17 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
     }
     
     // Force a test page break to ensure pagination works
-    console.log('\n--- FORCING TEST PAGE BREAK ---')
     pdf.addPage()
-    console.log('Added test page')
     pdf.setFontSize(12)
     pdf.text('Test Page 2 - If you see this, pagination is working!', margin, 50)
     
     // Add page numbers
     const pageCount = pdf.internal.getNumberOfPages()
-    console.log('\n--- FINAL PDF INFO ---')
-    console.log('Total pages:', pageCount)
-    console.log('Final yPos:', yPos)
-    
     for (let i = 1; i <= pageCount; i++) {
       pdf.setPage(i)
       pdf.setFontSize(10)
       pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.width - 40, pdf.internal.pageSize.height - 10)
     }
-    
-    console.log('=== PDF Generation Complete ===')
     
     pdf.save(`website-analysis-${new Date().toISOString().split('T')[0]}.pdf`)
     
