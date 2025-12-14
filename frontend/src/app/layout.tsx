@@ -1,6 +1,7 @@
 import React from 'react'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
@@ -9,23 +10,25 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Website Reflection - See Your Website\'s True Reflection | Free AI Analysis',
-  description: 'Paste your URL and watch AI uncover the real message your site delivers. A free website content & messaging audit — in one clear, objective summary.',
-  keywords: 'website analysis, messaging analysis, AI website audit, free website review, content analysis, marketing messaging, website reflection, site audit tool, website messaging, digital marketing analysis',
+  description: 'Paste your URL and watch AI uncover the real message your site delivers. Get a free website content & messaging audit with actionable insights in one clear, objective summary. Discover what your website really communicates to visitors.',
+  keywords: 'website analysis, messaging analysis, AI website audit, free website review, content analysis, marketing messaging, website reflection, site audit tool, website messaging, digital marketing analysis, SEO audit, website optimization',
   authors: [{ name: 'ApolloRise', url: 'https://apollorise.tech' }],
   creator: 'ApolloRise',
   publisher: 'ApolloRise',
   robots: 'index, follow',
+  metadataBase: new URL('https://reflection.apollorise.tech'),
   openGraph: {
     title: 'Website Reflection - See Your Website\'s True Reflection',
-    description: 'Free AI-powered website messaging analysis. Discover what your site really communicates to visitors.',
+    description: 'Free AI-powered website messaging analysis. Discover what your site really communicates to visitors. Get actionable insights and improve your website\'s messaging in minutes.',
     url: 'https://reflection.apollorise.tech',
     siteName: 'Website Reflection',
     images: [
       {
-        url: '/images/favicon.png',
+        url: '/images/og_reflection.png',
         width: 1200,
         height: 630,
-        alt: 'Website Reflection - AI Website Analysis Tool',
+        alt: 'Website Reflection - AI Website Analysis Tool | See Your Website\'s True Reflection',
+        type: 'image/png',
       },
     ],
     locale: 'en_US',
@@ -36,7 +39,8 @@ export const metadata: Metadata = {
     title: 'Website Reflection - See Your Website\'s True Reflection',
     description: 'Free AI-powered website messaging analysis. Discover what your site really communicates to visitors.',
     creator: '@ApolloRiseTech',
-    images: ['/images/favicon.png'],
+    site: '@ApolloRiseTech',
+    images: ['/images/og_reflection.png'],
   },
   icons: {
     icon: [
@@ -70,6 +74,18 @@ export default function RootLayout({
         className={inter.className}
         suppressHydrationWarning={true}
       >
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-KJ6ZN6MHEV"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-KJ6ZN6MHEV');
+          `}
+        </Script>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
