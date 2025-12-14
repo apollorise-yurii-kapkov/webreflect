@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://your-frontend-domain.com",  # Add production frontend domain
+        "https://reflection.apollorise.tech",
     ]
     
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")

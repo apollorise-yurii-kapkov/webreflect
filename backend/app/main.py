@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.core.database import init_db
 from app.api.v1.api import api_router
 from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.daily_limit import DailyLimitMiddleware
 
 
 @asynccontextmanager
@@ -29,7 +30,10 @@ def create_application() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Rate limiting middleware (first)
+    # Daily limit middleware (based on cookies) - first
+    app.middleware("http")(DailyLimitMiddleware())
+    
+    # Rate limiting middleware (based on IP)
     app.middleware("http")(RateLimitMiddleware(calls=100, period=60))
     
     # Security middleware
@@ -38,12 +42,12 @@ def create_application() -> FastAPI:
         allowed_hosts=settings.ALLOWED_HOSTS,
     )
 
-    # CORS middleware - allowing all origins for development to fix 400 Bad Request
+    # CORS middleware - restrict to allowed origins only
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Allow all origins for dev
+        allow_origins=settings.BACKEND_CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
 

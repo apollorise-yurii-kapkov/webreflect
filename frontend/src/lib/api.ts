@@ -5,6 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
   timeout: 30000,
+  withCredentials: true, // Enable cookies for rate limiting
   headers: {
     'Content-Type': 'application/json',
     'Authorization': 'Basic ' + btoa('admin:secure_password_2024'),

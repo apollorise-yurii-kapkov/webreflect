@@ -56,14 +56,28 @@ export function AnalysisForm({ onAnalysisStart }: AnalysisFormProps) {
     } catch (error: any) {
       console.error('Analysis start error:', error)
       
-      const errorMessage = error.response?.data?.detail || 
-                          error.message || 
-                          'Failed to start analysis. Please try again.'
+      let errorMessage = 'Failed to start analysis. Please try again.'
+      let errorTitle = "Analysis Failed"
+      
+      // Handle rate limit errors (429)
+      if (error.response?.status === 429) {
+        const rateLimitData = error.response?.data
+        errorTitle = "Daily Limit Reached"
+        errorMessage = rateLimitData?.detail || 
+                      `You've reached the daily limit of ${rateLimitData?.limit || 10} requests. ` +
+                      (rateLimitData?.retry_after_human 
+                        ? `Please try again in ${rateLimitData.retry_after_human}.` 
+                        : 'Please try again tomorrow.')
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail
+      } else if (error.message) {
+        errorMessage = error.message
+      }
       
       setError(errorMessage)
       
       toast({
-        title: "Analysis Failed",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive",
       })
