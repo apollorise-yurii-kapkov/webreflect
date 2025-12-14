@@ -98,7 +98,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex items-center justify-center p-8 min-h-screen">
+      <div className="relative z-10 flex items-center justify-center p-4 sm:p-8 min-h-screen">
         <div className="w-full max-w-4xl">
           {/* Processing Mirror */}
           <motion.div
@@ -113,7 +113,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
             }}
             className="relative"
           >
-            <div className="relative w-full h-[780px] rounded-3xl overflow-hidden bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-xl border border-white/20 shadow-2xl">
+            <div className="relative w-full min-h-[500px] sm:min-h-[600px] md:h-[780px] rounded-3xl overflow-hidden bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-xl border border-white/20 shadow-2xl">
               {/* Dynamic scanning effect */}
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/10 to-transparent"
@@ -141,13 +141,13 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
               />
 
               {/* Content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 text-center">
                 {/* URL being analyzed */}
                 <motion.div
                   initial={{ opacity: 0, y: -30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="mb-12"
+                  className="mb-6 sm:mb-12"
                 >
                   <motion.p
                     className="text-gray-300 text-sm mb-3 tracking-wider uppercase"
@@ -160,7 +160,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                 </motion.div>
 
                 {/* Enhanced Progress Circle */}
-                <div className="relative w-40 h-40 mb-12">
+                <div className="relative w-28 h-28 sm:w-40 sm:h-40 mb-6 sm:mb-12">
                   {/* Outer glow ring */}
                   <motion.div
                     className="absolute inset-0 rounded-full"
@@ -174,7 +174,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                     transition={{ duration: 2, repeat: Infinity }}
                   />
 
-                  <svg className="w-40 h-40 transform -rotate-90" viewBox="0 0 100 100">
+                  <svg className="w-28 h-28 sm:w-40 sm:h-40 transform -rotate-90" viewBox="0 0 100 100">
                     {/* Background circle */}
                     <circle
                       cx="50"
@@ -232,7 +232,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -30 }}
                   transition={{ duration: 0.5 }}
-                  className="text-center mb-8"
+                  className="text-center mb-4 sm:mb-8"
                 >
                   <motion.p
                     className="text-blue-300 text-xl font-light mb-4"
@@ -263,7 +263,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                 </motion.div>
 
                 {/* Enhanced Steps indicator */}
-                <div className="flex justify-center space-x-6">
+                <div className="flex flex-wrap justify-center gap-3 sm:gap-6 px-2" style={{ display: 'none' }}>
                   {processingSteps.map((step, index) => (
                     <motion.div
                       key={step.id}
@@ -287,7 +287,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                         } : {}}
                         transition={{ duration: 1.5, repeat: Infinity }}
                       />
-                      <span className={`text-xs transition-colors duration-500 ${index <= currentStep ? 'text-white' : 'text-gray-500'
+                      <span className={`text-[10px] sm:text-xs transition-colors duration-500 hidden sm:block ${index <= currentStep ? 'text-white' : 'text-gray-500'
                         }`}>
                         {step.label.split(' ')[0]}
                       </span>

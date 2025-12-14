@@ -9,7 +9,7 @@ export function Footer() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6, delay: 0.8 }}
-      className="relative z-10 py-12 bg-black/20 backdrop-blur-sm border-t border-white/10"
+      className="relative z-10 py-8 sm:py-12 bg-black/20 backdrop-blur-sm border-t border-white/10"
     >
       <div className="container mx-auto px-4">
         <div className="text-center space-y-6">
@@ -52,6 +52,13 @@ export function Footer() {
               <ExternalLink className="w-3 h-3" />
             </a>
             <span>team</span>
+          </div>
+
+          {/* Version Badge */}
+          <div>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-gray-400 border border-white/5">
+              Beta v1.0
+            </span>
           </div>
         </div>
       </div>

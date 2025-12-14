@@ -23,13 +23,13 @@ class WebsiteCrawler:
         
         Strategy:
         1. Crawl root page (Level 0).
-        2. Extract Level 1 links (limit 20).
+        2. Extract Level 1 links (limit 30).
         3. Crawl Level 1 pages.
         4. If token space remains, crawl Level 2 pages (links found on Level 1).
         5. Stop when token limit (50k) is reached or no more links.
         """
         MAX_TOKENS = 50000
-        LEVEL_1_LIMIT = 20
+        LEVEL_1_LIMIT = 30
         
         crawled_pages = []
         visited_urls = set()
@@ -72,7 +72,7 @@ class WebsiteCrawler:
                         break
                     
                     # Logic for adding next level links
-                    # Level 0 -> adds Level 1 (limit 20)
+                    # Level 0 -> adds Level 1 (limit 30)
                     # Level 1 -> adds Level 2 (unlimited count, but bounded by global token/page limits mostly)
                     # User said: "Then if window allows, go to links inside those pages".
                     
@@ -85,11 +85,11 @@ class WebsiteCrawler:
                         raw_html = page_data.get('raw_html', '')
                         internal_links = self._extract_internal_links(current_url, raw_html)
                         
-                        # Prioritize is good, but for Level 0 we specifically need to limit to 20
+                        # Prioritize is good, but for Level 0 we specifically need to limit to 30
                         if level == 0:
-                            # Prioritize to get the "best" 20 links
+                            # Prioritize to get the "best" 30 links
                             prioritized = self._prioritize_links(internal_links, raw_html)
-                            # Take top 20 unique that haven't been visited
+                            # Take top 30 unique that haven't been visited
                             count_added = 0
                             for link in prioritized:
                                 if link not in visited_urls:

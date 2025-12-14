@@ -281,7 +281,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
   ] : []
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 px-4 sm:px-0">
       {/* Header */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
@@ -292,7 +292,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
         <div className="w-16 h-16 mx-auto mirror-frame flex items-center justify-center">
           <CheckCircle className="w-8 h-8 text-green-500" />
         </div>
-        <h1 className="text-3xl font-bold">Website Reflection Complete</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Website Reflection Complete</h1>
         <p className="text-muted-foreground">
           Analysis for: <span className="text-primary font-medium">{data.url}</span>
         </p>
@@ -304,9 +304,9 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="glass-effect rounded-2xl p-8 text-center"
+          className="glass-effect rounded-2xl p-4 sm:p-8 text-center"
         >
-          <h2 className="text-2xl font-semibold mb-6">Overall Messaging Score</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Overall Messaging Score</h2>
           <div className="relative w-32 h-32 mx-auto mb-6">
             <div className="mirror-frame w-full h-full">
               <div className="absolute inset-0 flex items-center justify-center">
@@ -331,9 +331,9 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="glass-effect rounded-2xl p-8"
+          className="glass-effect rounded-2xl p-4 sm:p-8"
         >
-          <h2 className="text-2xl font-semibold mb-6">Detailed Analysis</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Detailed Analysis</h2>
           <div className="grid md:grid-cols-2 gap-6">
             {scoreItems.map((item, index) => (
               <motion.div
@@ -365,9 +365,9 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="glass-effect rounded-2xl p-8"
+          className="glass-effect rounded-2xl p-4 sm:p-8"
         >
-          <h2 className="text-2xl font-semibold mb-6">Messaging Insights</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Messaging Insights</h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div>
@@ -417,9 +417,9 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="glass-effect rounded-2xl p-8"
+          className="glass-effect rounded-2xl p-4 sm:p-8"
         >
-          <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 flex items-center gap-2">
             <Zap className="w-6 h-6 text-primary" />
             Quick Wins
           </h2>
@@ -450,7 +450,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.5 }}
-        className="flex flex-wrap gap-4 justify-center"
+        className="flex flex-wrap gap-2 sm:gap-4 justify-center pb-8"
       >
         <Button
           variant="outline"

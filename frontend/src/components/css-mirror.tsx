@@ -35,7 +35,7 @@ export function CSSMirror({ children }: CSSMirrorProps) {
   }, [])
 
   return (
-    <div className="relative w-full min-h-screen bg-black flex items-center justify-center overflow-hidden">
+    <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
       {/* Enhanced animated background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-800">
         {/* Floating particles with more variety */}
@@ -75,10 +75,10 @@ export function CSSMirror({ children }: CSSMirrorProps) {
           style={{ perspective: '1000px' }}
         >
           {/* Mirror frame with enhanced effects */}
-          <div className="relative bg-gradient-to-br from-gray-700/20 to-gray-900/40 backdrop-blur-2xl border-2 border-white/20 rounded-[2.5rem] p-20 shadow-[0_0_80px_rgba(59,130,246,0.3)] overflow-hidden">
+          <div className="relative bg-gradient-to-br from-gray-700/20 to-gray-900/40 backdrop-blur-2xl border-2 border-white/20 rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-12 md:p-20 shadow-[0_0_80px_rgba(59,130,246,0.3)] overflow-hidden">
             
             {/* Mirror surface with realistic reflections */}
-            <div className="absolute inset-4 rounded-[2rem] overflow-hidden bg-gradient-to-br from-gray-800/60 to-gray-900/80 backdrop-blur-3xl">
+            <div className="absolute inset-2 sm:inset-4 rounded-xl sm:rounded-[2rem] overflow-hidden bg-gradient-to-br from-gray-800/60 to-gray-900/80 backdrop-blur-3xl">
               
               {/* Animated silhouettes behind glass - more prominent */}
               {[0, 1, 2, 3].map((i) => (
@@ -180,7 +180,7 @@ export function CSSMirror({ children }: CSSMirrorProps) {
             />
 
             {/* Content with enhanced positioning */}
-            <div className="relative z-20 flex items-center justify-center min-h-[520px]">
+            <div className="relative z-20 flex items-center justify-center min-h-[65dvh] sm:min-h-[520px]">
               {children}
             </div>
           </div>

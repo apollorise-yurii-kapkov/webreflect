@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { AnalysisResult } from './analysis-result'
-import { Copy, Share2, Download } from 'lucide-react'
+import { Copy, Share2, Download, ArrowLeft } from 'lucide-react'
 
 interface AnalysisData {
   jobId: string
@@ -23,7 +23,7 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
   const [copySuccess, setCopySuccess] = useState(false)
   if (isError) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-black">
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-black">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -81,12 +81,12 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
         animate={{ opacity: 1, y: 0 }}
         className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-white/10"
       >
-        <div className="max-w-4xl mx-auto px-8 py-6 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-light text-white">Website Reflection</h1>
             <p className="text-gray-400 text-sm mt-1">{data.url}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* Share/Copy/Download buttons */}
             <button
               onClick={async () => {
@@ -231,16 +231,18 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
 
             <button
               onClick={onReset}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
+              className="px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 border border-white/20 text-sm flex items-center justify-center"
+              aria-label="Run Another Reflection"
             >
-              Run Another Reflection
+              <ArrowLeft className="w-4 h-4 sm:hidden" />
+              <span className="hidden sm:inline">Run Another Reflection</span>
             </button>
           </div>
         </div>
       </motion.div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -248,7 +250,7 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
           className="prose prose-invert prose-lg max-w-none"
         >
           {/* Summary container */}
-          <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm rounded-3xl p-12 border border-white/10">
+          <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-12 border border-white/10">
             {analysisText ? (
               <div className="space-y-6">
                 {analysisText.split('\n\n').map((paragraph, index) => (

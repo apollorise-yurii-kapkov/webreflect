@@ -63,38 +63,39 @@ class WebsiteAnalyzer:
         return "\n\n".join(content_parts)
     
     async def _generate_objective_summary(self, content: str, job_id: str = None) -> str:
-        """Generate an objective, factual summary of the website content."""
+        """Generate an objective, narrative summary of the website content."""
         prompt = f"""
-        Analyze the following website content and provide a comprehensive, objective summary.
-        
+        You are a mirror reflecting what a website communicates to visitors. Analyze the following website content and write a clear, objective narrative about what this website tells the world.
+
         Website Content:
         {content}
-        
-        Please provide a factual analysis that covers:
-        1. What the website is about and its primary purpose
-        2. The main products, services, or content offered
-        3. Target audience and market positioning
-        4. Key messaging themes and value propositions presented
-        5. Content structure and organization across pages
-        6. Notable features, functionality, or unique aspects
-        
-        Requirements:
-        - Be completely objective and factual
-        - Do not include subjective opinions, scores, or recommendations
-        - Focus on describing what IS present, not what SHOULD be
-        - Provide a concise Executive Summary style report (approx. 1 page, up to 250 words)
-        - Use clear, professional language
-        - Organize information logically with smooth transitions
-        - If content is partial or missing, acknowledge what was found without Hallucinating
-        
-        Write this as a cohesive analysis, not as bullet points or lists.
+
+        Write a reflection in a storytelling style that answers:
+        - Who are these people/company and what do they do?
+        - What is their core offering or mission?
+        - What makes them stand out or what are they strong at?
+        - What message does a visitor actually receive when landing on this site?
+        - Who seems to be their target audience?
+
+        IMPORTANT GUIDELINES:
+        - Write a direct narrative reflection of the website
+        - Be objective and factual — describe what IS there, not what SHOULD be
+        - Use a natural, conversational but professional tone
+        - Do NOT use phrases like "I found", "I checked", "The analysis shows", or "Based on the content"
+        - Do NOT give scores, ratings, or recommendations
+        - Do NOT use bullet points or lists — write flowing paragraphs
+        - Keep it concise: 150-250 words maximum
+        - If something is unclear or missing from the site, say so honestly
+        - Focus on the MESSAGING — what story does this website tell?
+
+        Start directly with the reflection. Example start: "This website presents itself as..." or "The company positions itself as..."
         """
         
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a professional content analyst. Provide objective, factual summaries without subjective evaluations or recommendations."},
+                    {"role": "system", "content": "You are a website reflection mirror — you objectively describe what a website communicates to visitors. Write in a natural, narrative style. Be factual and honest, never promotional or critical."},
                     {"role": "user", "content": prompt}
                 ],
             )

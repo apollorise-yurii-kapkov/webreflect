@@ -69,7 +69,7 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-black">
+    <div className="h-[100dvh] relative overflow-hidden bg-black">
       {/* Background mirror effect */}
       <CSSMirror>
         <motion.div
@@ -83,9 +83,9 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="text-5xl font-light text-white mb-4 tracking-wide"
+            className="text-3xl sm:text-4xl md:text-5xl font-light text-white mb-4 tracking-wide px-4"
           >
-            See Your Website’s True Reflection
+            Your Website’s Reflection in Others Eyes
           </motion.h1>
 
           {/* Description */}
@@ -93,9 +93,9 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="text-xl text-gray-300 mb-12 leading-relaxed text-center"
+            className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 sm:mb-12 leading-relaxed text-center px-4"
           >
-            Paste your URL and watch AI uncover the real message your site delivers. A free website content & messaging audit — in one clear, objective summary.
+            Paste your URL and let AI reflect what visitors truly see and hear — in one clear, objective messaging audit.
           </motion.p>
 
           {/* Input form */}
@@ -104,7 +104,7 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.9, duration: 0.8 }}
             onSubmit={handleSubmit}
-            className="w-full max-w-lg mx-auto"
+            className="w-full max-w-lg mx-auto px-4"
           >
             <div className="relative">
               <input
@@ -113,14 +113,14 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="Enter website URL..."
                 disabled={isLoading}
-                className="w-full px-6 py-4 bg-black/40 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all duration-300"
+                className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-black/40 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all duration-300 text-sm sm:text-base pr-28 sm:pr-36"
               />
               <motion.button
                 type="submit"
                 disabled={isLoading || !url.trim()}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="absolute right-2 top-2 bottom-2 px-6 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl text-white font-medium transition-all duration-300 backdrop-blur-sm"
+                className="absolute right-2 top-2 bottom-2 px-3 sm:px-6 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl text-white font-medium transition-all duration-300 backdrop-blur-sm text-xs sm:text-base"
               >
                 {isLoading ? (
                   <motion.div
@@ -129,9 +129,14 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
                     className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                   />
                 ) : (
-                  'Reflect My Site'
+                  'Show me'
                 )}
               </motion.button>
+            </div>
+            <div className="mt-4 text-center">
+              <span className="text-xs text-white/40 font-light tracking-wide">
+                Daily limit: 10 reflections per day
+              </span>
             </div>
           </motion.form>
         </motion.div>
