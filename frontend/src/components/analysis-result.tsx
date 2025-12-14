@@ -43,10 +43,10 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
     try {
       // First, mark the report as shared on the backend
       await analysisApi.shareReport(data.jobId)
-      
+
       // Create share URL with just 'id' parameter
       const shareUrl = `${window.location.origin}?id=${data.jobId}`
-      
+
       if (navigator.share) {
         try {
           await navigator.share({
@@ -82,32 +82,32 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
     }
   }
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     const pdf = new jsPDF()
     const pageHeight = pdf.internal.pageSize.height
     const margin = 20
     const maxY = pageHeight - 30
     let yPos = 30
-    
+
     // Simple function to add text with page breaks
     const addTextWithBreaks = (text: string, fontSize: number = 12, isBold: boolean = false) => {
       pdf.setFontSize(fontSize)
-      pdf.setFont(undefined, isBold ? 'bold' : 'normal')
-      
+      pdf.setFont('helvetica', isBold ? 'bold' : 'normal')
+
       const lines = pdf.splitTextToSize(text, 170)
-      
+
       for (let i = 0; i < lines.length; i++) {
         // Check if we need a new page
         if (yPos > maxY - 15) {
           pdf.addPage()
           yPos = 30
         }
-        
+
         pdf.text(lines[i], margin, yPos)
         yPos += fontSize * 0.5 + 3
       }
     }
-    
+
     // Add spacing
     const addSpacing = (space: number = 10) => {
       yPos += space
@@ -116,15 +116,31 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
         yPos = 30
       }
     }
-    
+
     // Header
+    try {
+      const logoUrl = '/images/main_full_light_bg.png'
+      const img = new Image()
+      img.src = logoUrl
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+      })
+      const imgWidth = 35
+      const imgHeight = (img.height * imgWidth) / img.width
+      // Place at top right (A4 width ~210mm)
+      pdf.addImage(img, 'PNG', 210 - imgWidth - 15, 15, imgWidth, imgHeight)
+    } catch (e) {
+      console.error("Logo load failed", e)
+    }
+
     addTextWithBreaks('Website Reflection Analysis', 20, true)
     addSpacing(15)
-    
+
     addTextWithBreaks(`URL: ${data.url}`, 12)
     addTextWithBreaks(`Generated: ${new Date().toLocaleDateString()}`, 12)
     addSpacing(20)
-    
+
     // Overall Score
     if (scores) {
       addTextWithBreaks('Overall Score', 16, true)
@@ -132,12 +148,12 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
       addTextWithBreaks(`${scores.overall}/100`, 24, true)
       addSpacing(20)
     }
-    
+
     // Individual Scores
     if (scores) {
       addTextWithBreaks('Detailed Scores', 16, true)
       addSpacing(10)
-      
+
       const scoreItems = [
         { name: 'Clarity', value: scores.clarity },
         { name: 'Consistency', value: scores.consistency },
@@ -146,13 +162,13 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
         { name: 'CTA Strength', value: scores.cta_strength },
         { name: 'Audience Fit', value: scores.audience_fit },
       ]
-      
+
       scoreItems.forEach(item => {
         addTextWithBreaks(`${item.name}: ${item.value}/100`, 12)
       })
       addSpacing(20)
     }
-    
+
     // Content Summary
     if (result?.content_summary) {
       addTextWithBreaks('Content Summary', 16, true)
@@ -160,7 +176,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
       addTextWithBreaks(result.content_summary, 10)
       addSpacing(20)
     }
-    
+
     // Messaging Analysis
     if (result?.messaging_analysis) {
       addTextWithBreaks('Messaging Analysis', 16, true)
@@ -168,33 +184,33 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
       addTextWithBreaks(result.messaging_analysis, 10)
       addSpacing(20)
     }
-    
+
     // Quick Wins
     if (quickWins.length > 0) {
       addTextWithBreaks('Quick Wins', 16, true)
       addSpacing(10)
-      
+
       quickWins.forEach((win: string, index: number) => {
         addTextWithBreaks(`${index + 1}. ${win}`, 10)
         addSpacing(5)
       })
     }
-    
+
     // Force a test page break to ensure pagination works
     pdf.addPage()
     pdf.setFontSize(12)
     pdf.text('Test Page 2 - If you see this, pagination is working!', margin, 50)
-    
+
     // Add page numbers
-    const pageCount = pdf.internal.getNumberOfPages()
+    const pageCount = (pdf.internal as any).getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
       pdf.setPage(i)
       pdf.setFontSize(10)
       pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.width - 40, pdf.internal.pageSize.height - 10)
     }
-    
+
     pdf.save(`website-analysis-${new Date().toISOString().split('T')[0]}.pdf`)
-    
+
     toast({
       title: "PDF Downloaded",
       description: "Your analysis report has been downloaded as PDF.",
@@ -205,7 +221,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
     let report = `Website Reflection Analysis\n`
     report += `URL: ${data.url}\n`
     report += `Generated: ${new Date().toLocaleDateString()}\n\n`
-    
+
     if (scores) {
       report += `Overall Score: ${scores.overall}/100\n\n`
       report += `Detailed Scores:\n`
@@ -216,18 +232,18 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
       report += `- CTA Strength: ${scores.cta_strength}/100\n`
       report += `- Audience Fit: ${scores.audience_fit}/100\n\n`
     }
-    
+
     if (result?.content_summary) {
       report += `Content Summary:\n${result.content_summary}\n\n`
     }
-    
+
     if (analysis) {
       report += `Messaging Analysis:\n`
       report += `Primary Message: ${analysis.primary_message}\n`
       report += `Target Audience: ${analysis.target_audience}\n`
       report += `Value Proposition: ${analysis.value_proposition}\n`
       report += `Tone & Voice: ${analysis.tone_and_voice}\n\n`
-      
+
       if (analysis.strengths?.length > 0) {
         report += `Strengths:\n`
         analysis.strengths.forEach((strength: string, index: number) => {
@@ -235,7 +251,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
         })
         report += `\n`
       }
-      
+
       if (analysis.weaknesses?.length > 0) {
         report += `Areas for Improvement:\n`
         analysis.weaknesses.forEach((weakness: string, index: number) => {
@@ -244,14 +260,14 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
         report += `\n`
       }
     }
-    
+
     if (quickWins.length > 0) {
       report += `Quick Wins:\n`
       quickWins.forEach((win: string, index: number) => {
         report += `${index + 1}. ${win}\n`
       })
     }
-    
+
     return report
   }
 
@@ -445,7 +461,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
           <Copy className="w-4 h-4 mr-2" />
           Copy Report
         </Button>
-        
+
         <Button
           variant="outline"
           size="lg"
@@ -455,7 +471,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
           <Share2 className="w-4 h-4 mr-2" />
           Share Results
         </Button>
-        
+
         <Button
           variant="outline"
           size="lg"
@@ -464,7 +480,7 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
           <Download className="w-4 h-4 mr-2" />
           Download PDF
         </Button>
-        
+
         <Button
           variant="mirror"
           size="lg"

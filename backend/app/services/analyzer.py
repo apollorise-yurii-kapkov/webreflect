@@ -27,7 +27,7 @@ class WebsiteAnalyzer:
             
             return {
                 'content_summary': objective_analysis,
-                'messaging_analysis': objective_analysis
+                'messaging_analysis': None
             }
             
         except Exception as e:

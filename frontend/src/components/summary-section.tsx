@@ -51,7 +51,7 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
 
   // Check if we have complete analysis results with scores
   const hasCompleteResults = data.result?.scores && data.result?.messaging_analysis
-  
+
   // Debug: log the data structure
   console.log('Analysis data:', data)
   console.log('Has complete results:', hasCompleteResults)
@@ -104,7 +104,7 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
               <Copy className="w-4 h-4" />
               {copySuccess ? 'Copied' : 'Copy'}
             </button>
-            
+
             <button
               onClick={async () => {
                 try {
@@ -113,15 +113,15 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
                     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
                     const response = await fetch(`${API_BASE_URL}/api/v1/analysis/reflect/${data.jobId}/share`, {
                       method: 'POST',
-                      headers: { 
+                      headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Basic ' + btoa('admin:secure_password_2024')
                       }
                     })
-                    
+
                     if (response.ok) {
                       const shareUrl = `${window.location.origin}/${data.jobId}`
-                      
+
                       if (navigator.share) {
                         await navigator.share({
                           title: 'Website Analysis Report',
@@ -142,7 +142,7 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
               <Share2 className="w-4 h-4" />
               Share
             </button>
-            
+
             <button
               onClick={async () => {
                 try {
@@ -152,26 +152,26 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
                   const margin = 10
                   const maxY = pageHeight - 30
                   let yPos = 30
-                  
+
                   // Function to add text with page breaks
                   const addTextWithBreaks = (text: string, fontSize: number = 12, isBold: boolean = false) => {
                     pdf.setFontSize(fontSize)
                     pdf.setFont('helvetica', isBold ? 'bold' : 'normal')
-                    
+
                     const lines = pdf.splitTextToSize(text, 180)
-                    
+
                     for (let i = 0; i < lines.length; i++) {
                       // Check if we need a new page
                       if (yPos > maxY - 15) {
                         pdf.addPage()
                         yPos = 30
                       }
-                      
+
                       pdf.text(lines[i], margin, yPos)
                       yPos += fontSize * 0.25 + 2 // Reduced spacing by half
                     }
                   }
-                  
+
                   // Add spacing
                   const addSpacing = (space: number = 10) => {
                     yPos += space
@@ -180,29 +180,44 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
                       yPos = 30
                     }
                   }
-                  
+
                   // Header
+                  try {
+                    const logoUrl = '/images/main_full_light_bg.png'
+                    const img = new Image()
+                    img.src = logoUrl
+                    await new Promise((resolve, reject) => {
+                      img.onload = resolve
+                      img.onerror = reject
+                    })
+                    const imgWidth = 35
+                    const imgHeight = (img.height * imgWidth) / img.width
+                    pdf.addImage(img, 'PNG', 210 - imgWidth - 15, 15, imgWidth, imgHeight)
+                  } catch (e) {
+                    console.error("Logo load failed", e)
+                  }
+
                   addTextWithBreaks('Website Analysis Report', 20, true)
                   addSpacing(15)
-                  
+
                   addTextWithBreaks(`URL: ${data.url}`, 12)
                   addTextWithBreaks(`Generated: ${new Date().toLocaleDateString()}`, 12)
                   addSpacing(20)
-                  
+
                   // Main content
                   if (analysisText) {
                     addTextWithBreaks(analysisText, 10)
                   }
-                  
+
                   // Add page numbers
                   const pageCount = (pdf as any).internal.getNumberOfPages()
-                  
+
                   for (let i = 1; i <= pageCount; i++) {
                     pdf.setPage(i)
                     pdf.setFontSize(10)
                     pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.width - 40, pdf.internal.pageSize.height - 10)
                   }
-                  
+
                   pdf.save(`website-analysis-${new Date().toISOString().split('T')[0]}.pdf`)
                 } catch (error) {
                   console.error('Failed to generate PDF:', error)
@@ -213,7 +228,7 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
               <Download className="w-4 h-4" />
               PDF
             </button>
-            
+
             <button
               onClick={onReset}
               className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 border border-white/20 text-sm"
