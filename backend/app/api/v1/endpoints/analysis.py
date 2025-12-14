@@ -64,7 +64,7 @@ async def get_analysis_status(
             raise HTTPException(status_code=404, detail="Job not found")
         
         # Get cached status for progress
-        cached_status = await analysis_service.get_job_status(job_id)
+        cached_status = await analysis_service.get_job_status(db, job_id)
         progress = cached_status.get("progress", 0)
         
         # Build response data

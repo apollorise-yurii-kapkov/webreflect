@@ -1,5 +1,4 @@
-from sqlalchemy import Column, String, Float, DateTime, Text, Integer
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Float, DateTime, Text, Integer, Uuid
 from sqlalchemy.sql import func
 import uuid
 from app.core.database import Base
@@ -9,7 +8,7 @@ class CostEntry(Base):
     """Model for tracking operational costs and expenses."""
     __tablename__ = "cost_entries"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     service = Column(String(100), nullable=False, index=True)  # e.g., "openai", "crawl4ai", "redis", "postgres"
     operation = Column(String(100), nullable=False)  # e.g., "gpt-4-analysis", "website-crawl", "storage"
     cost_amount = Column(Float, nullable=False)  # Cost in USD
@@ -21,7 +20,7 @@ class CostEntry(Base):
     data_processed_mb = Column(Float, nullable=True)  # Amount of data processed
     
     # Context
-    job_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Link to analysis job
+    job_id = Column(String(36), nullable=True, index=True)  # Link to analysis job
     description = Column(Text, nullable=True)
     extra_data = Column(Text, nullable=True)  # JSON string for additional data
     
@@ -37,7 +36,7 @@ class CostSummary(Base):
     """Model for storing daily/monthly cost summaries."""
     __tablename__ = "cost_summaries"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     period_type = Column(String(20), nullable=False)  # "daily", "monthly", "yearly"
     period_start = Column(DateTime(timezone=True), nullable=False)
     period_end = Column(DateTime(timezone=True), nullable=False)

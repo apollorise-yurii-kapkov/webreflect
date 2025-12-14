@@ -24,16 +24,21 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
 
   useEffect(() => {
     let interval: NodeJS.Timeout
+    let consecutiveErrors = 0
+    const MAX_RETRIES = 5
 
     const pollStatus = async () => {
       try {
         const status = await analysisApi.getAnalysisStatus(data.jobId)
-        
+
+        // Reset error counter on success
+        consecutiveErrors = 0
+
         if (status.status === 'completed' && status.result) {
           onComplete(status.result)
           return
         }
-        
+
         if (status.status === 'failed') {
           onError()
           return
@@ -47,7 +52,12 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
         }
       } catch (error) {
         console.error('Error polling status:', error)
-        onError()
+        consecutiveErrors++
+
+        // Only trigger error state if we've failed multiple times in a row
+        if (consecutiveErrors >= MAX_RETRIES) {
+          onError()
+        }
       }
     }
 
@@ -86,18 +96,18 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
           />
         ))}
       </div>
-      
+
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center p-8 min-h-screen">
         <div className="w-full max-w-4xl">
           {/* Processing Mirror */}
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ 
+            animate={{
               scale: 1,
               opacity: 1,
             }}
-            transition={{ 
+            transition={{
               duration: 0.8,
               ease: "easeOut"
             }}
@@ -116,9 +126,9 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                   ease: "linear",
                 }}
               />
-              
+
               {/* Pulsing glow effect */}
-              <motion.div 
+              <motion.div
                 className="absolute inset-4 rounded-2xl blur-3xl"
                 animate={{
                   background: [
@@ -139,7 +149,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                   transition={{ delay: 0.3 }}
                   className="mb-12"
                 >
-                  <motion.p 
+                  <motion.p
                     className="text-gray-300 text-sm mb-3 tracking-wider uppercase"
                     animate={{ opacity: [0.7, 1, 0.7] }}
                     transition={{ duration: 2, repeat: Infinity }}
@@ -163,7 +173,7 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
                   />
-                  
+
                   <svg className="w-40 h-40 transform -rotate-90" viewBox="0 0 100 100">
                     {/* Background circle */}
                     <circle
@@ -199,10 +209,10 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                       </linearGradient>
                     </defs>
                   </svg>
-                  
+
                   {/* Progress text */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <motion.span 
+                    <motion.span
                       className="text-white text-2xl font-light mb-1"
                       key={progress}
                       initial={{ scale: 0.8, opacity: 0 }}
@@ -224,25 +234,25 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                   transition={{ duration: 0.5 }}
                   className="text-center mb-8"
                 >
-                  <motion.p 
+                  <motion.p
                     className="text-blue-300 text-xl font-light mb-4"
                     animate={{ opacity: [0.8, 1, 0.8] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   >
                     {processingSteps[currentStep]?.label}
                   </motion.p>
-                  
+
                   {/* Animated dots */}
                   <div className="flex justify-center space-x-2">
                     {[0, 1, 2].map((i) => (
                       <motion.div
                         key={i}
-                        animate={{ 
+                        animate={{
                           scale: [1, 1.4, 1],
                           opacity: [0.5, 1, 0.5]
                         }}
-                        transition={{ 
-                          duration: 1.2, 
+                        transition={{
+                          duration: 1.2,
                           repeat: Infinity,
                           delay: i * 0.2
                         }}
@@ -263,11 +273,10 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                       transition={{ delay: index * 0.1 }}
                     >
                       <motion.div
-                        className={`w-4 h-4 rounded-full transition-all duration-700 ${
-                          index <= currentStep 
-                            ? 'bg-gradient-to-r from-blue-400 to-purple-400 shadow-lg' 
+                        className={`w-4 h-4 rounded-full transition-all duration-700 ${index <= currentStep
+                            ? 'bg-gradient-to-r from-blue-400 to-purple-400 shadow-lg'
                             : 'bg-white/20'
-                        }`}
+                          }`}
                         animate={index === currentStep ? {
                           scale: [1, 1.2, 1],
                           boxShadow: [
@@ -278,9 +287,8 @@ export function ProcessingSection({ data, onComplete, onError }: ProcessingSecti
                         } : {}}
                         transition={{ duration: 1.5, repeat: Infinity }}
                       />
-                      <span className={`text-xs transition-colors duration-500 ${
-                        index <= currentStep ? 'text-white' : 'text-gray-500'
-                      }`}>
+                      <span className={`text-xs transition-colors duration-500 ${index <= currentStep ? 'text-white' : 'text-gray-500'
+                        }`}>
                         {step.label.split(' ')[0]}
                       </span>
                     </motion.div>

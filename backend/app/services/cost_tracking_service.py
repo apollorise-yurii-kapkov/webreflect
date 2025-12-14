@@ -33,11 +33,16 @@ class CostTrackingService:
     ) -> CostEntry:
         """Log a new cost entry."""
         try:
+            # Convert job_id to string for DB
+            job_id_str = None
+            if job_id:
+                job_id_str = str(job_id)
+
             cost_entry = CostEntry(
                 service=service,
                 operation=operation,
                 cost_amount=cost_amount,
-                job_id=job_id,
+                job_id=job_id_str,
                 tokens_used=tokens_used,
                 requests_count=requests_count,
                 data_processed_mb=data_processed_mb,

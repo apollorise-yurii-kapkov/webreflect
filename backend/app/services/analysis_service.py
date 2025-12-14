@@ -11,9 +11,8 @@ from app.services.crawler import WebsiteCrawler
 from app.services.analyzer import WebsiteAnalyzer
 from app.services.cost_tracking_service import get_cost_tracking_service
 from app.core.database import get_db
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
-from app.core.redis import redis_client
 from app.schemas.analysis import MessagingAnalysis, MessagingScores
 
 
@@ -25,7 +24,29 @@ class AnalysisService:
         self.analyzer = WebsiteAnalyzer()
     
     async def create_analysis_job(self, db: AsyncSession, url: str) -> AnalysisJob:
-        """Create a new analysis job."""
+        """Create a new analysis job or return existing valid one."""
+        # Check for existing completed job for this URL (valid for 7 days)
+        # This is a key optimization for low-resource environments ("intelligent caching")
+        from sqlalchemy import desc
+        from datetime import timedelta
+        
+        cutoff_date = datetime.utcnow() - timedelta(days=7)
+        
+        query = select(AnalysisJob).where(
+            AnalysisJob.url == url,
+            AnalysisJob.status == "completed",
+            AnalysisJob.completed_at >= cutoff_date
+        ).order_by(desc(AnalysisJob.completed_at))
+        
+        existing_result = await db.execute(query)
+        existing_job = existing_result.scalars().first()
+        
+        if existing_job:
+            # Return existing job to save resources
+            # We refresh it to ensure we have latest state
+            await db.refresh(existing_job)
+            return existing_job
+
         # Validate URL first
         is_valid = await self.crawler.validate_url(url)
         if not is_valid:
@@ -36,13 +57,6 @@ class AnalysisService:
         db.add(job)
         await db.commit()
         await db.refresh(job)
-        
-        # Cache job status
-        await redis_client.set_json(
-            f"job_status:{job.id}",
-            {"status": "pending", "progress": 0},
-            expire=3600
-        )
         
         return job
     
@@ -103,7 +117,7 @@ class AnalysisService:
             raise
     
     async def _update_job_status(self, db: AsyncSession, job_id: UUID, status: str, progress: int, message: str = None):
-        """Update job status in database and cache."""
+        """Update job status in database."""
         # Update database
         update_values = {
             "status": status,
@@ -118,16 +132,6 @@ class AnalysisService:
         stmt = update(AnalysisJob).where(AnalysisJob.id == job_id).values(**update_values)
         await db.execute(stmt)
         await db.commit()
-        
-        # Update cache
-        cache_data = {
-            "status": status,
-            "progress": progress
-        }
-        if message:
-            cache_data["message"] = message
-        
-        await redis_client.set_json(f"job_status:{job_id}", cache_data, expire=3600)
     
     async def _save_crawled_pages(self, db: AsyncSession, job_id: UUID, pages_data: List[Dict]):
         """Save crawled pages to database."""
@@ -147,6 +151,10 @@ class AnalysisService:
     
     async def _save_analysis_result(self, db: AsyncSession, job_id: UUID, analysis_data: Dict):
         """Save analysis results to database."""
+        # Always clean up existing results for this job to prevent duplicates
+        delete_stmt = delete(AnalysisResult).where(AnalysisResult.job_id == job_id)
+        await db.execute(delete_stmt)
+            
         result = AnalysisResult(
             job_id=job_id,
             content_summary=analysis_data.get('content_summary'),
@@ -159,15 +167,25 @@ class AnalysisService:
         db.add(result)
         await db.commit()
     
-    async def get_job_status(self, job_id: UUID) -> Dict:
-        """Get job status from cache or database."""
-        # Try cache first
-        cached_status = await redis_client.get_json(f"job_status:{job_id}")
-        if cached_status:
-            return cached_status
-        
-        # Fallback to database
-        return {"status": "unknown", "progress": 0}
+    async def get_job_status(self, db: AsyncSession, job_id: UUID) -> Dict:
+        """Get job status from database."""
+        job = await db.get(AnalysisJob, job_id)
+        if not job:
+            return {"status": "unknown", "progress": 0}
+            
+        progress = 0
+        if job.status == "completed":
+            progress = 100
+        elif job.status == "processing":
+            progress = 50 # Approximate if not tracking granularly in DB, or add progress column
+        elif job.status == "failed":
+            progress = 0
+            
+        return {
+            "status": job.status,
+            "progress": progress,
+            "error": job.error_message
+        }
     
     async def share_analysis_job(self, db: AsyncSession, job_id: UUID) -> bool:
         """Mark analysis job as shared (publicly accessible)."""

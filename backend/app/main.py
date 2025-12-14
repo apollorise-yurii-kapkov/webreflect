@@ -38,23 +38,13 @@ def create_application() -> FastAPI:
         allowed_hosts=settings.ALLOWED_HOSTS,
     )
 
-    # CORS middleware - restricted to frontend domains only
+    # CORS middleware - allowing all origins for development to fix 400 Bad Request
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
+        allow_origins=["*"],  # Allow all origins for dev
         allow_credentials=True,
-        allow_methods=["GET", "POST", "OPTIONS"],  # Include OPTIONS for preflight
-        allow_headers=[
-            "Authorization", 
-            "Content-Type", 
-            "Accept",
-            "Accept-Language",
-            "Sec-Ch-Ua",
-            "Sec-Ch-Ua-Mobile", 
-            "Sec-Ch-Ua-Platform",
-            "User-Agent",
-            "Referer"
-        ],
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     # Include API router

@@ -11,10 +11,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/website_reflection"
-    
-    # Redis
-    REDIS_URL: str = "redis://localhost:6379"
+    DATABASE_URL: str = "sqlite+aiosqlite:////app/data/website_reflection.db"
     
     # OpenAI
     OPENAI_API_KEY: str = ""

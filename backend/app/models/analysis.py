@@ -1,5 +1,5 @@
-from sqlalchemy import Column, String, Text, DateTime, JSON, ForeignKey, Boolean
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy import Column, String, Text, DateTime, JSON, ForeignKey, Boolean, Uuid
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
@@ -12,7 +12,7 @@ class AnalysisJob(Base):
     
     __tablename__ = "analysis_jobs"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     url = Column(String(2048), nullable=False)
     status = Column(String(50), nullable=False, default="pending")
     is_shared = Column(Boolean, nullable=False, default=False)
@@ -31,12 +31,12 @@ class AnalysisResult(Base):
     
     __tablename__ = "analysis_results"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    job_id = Column(UUID(as_uuid=True), ForeignKey("analysis_jobs.id", ondelete="CASCADE"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    job_id = Column(Uuid(as_uuid=True), ForeignKey("analysis_jobs.id", ondelete="CASCADE"), nullable=False)
     content_summary = Column(Text, nullable=True)
     messaging_analysis = Column(JSON, nullable=True)
     scores = Column(JSON, nullable=True)
-    quick_wins = Column(ARRAY(Text), nullable=True)
+    quick_wins = Column(JSON, nullable=True)
     raw_content = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
