@@ -61,6 +61,9 @@ export const metadata: Metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#000000',
 }
 
 export default function RootLayout({
@@ -69,10 +72,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="bg-black">
       <body 
-        className={inter.className}
+        className={`${inter.className} bg-black`}
         suppressHydrationWarning={true}
+        style={{ backgroundColor: '#000000' }}
       >
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-KJ6ZN6MHEV"
