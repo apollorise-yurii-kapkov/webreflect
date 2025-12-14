@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { AnalysisResult } from './analysis-result'
 import { Copy, Share2, Download, ArrowLeft } from 'lucide-react'
+import { analysisApi } from '@/lib/api'
 
 interface AnalysisData {
   jobId: string
@@ -110,27 +111,19 @@ export function SummarySection({ data, onReset, isError }: SummarySectionProps) 
                 try {
                   if (data.jobId) {
                     // Share the report
-                    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-                    const response = await fetch(`${API_BASE_URL}/api/v1/analysis/reflect/${data.jobId}/share`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + btoa('admin:secure_password_2024')
-                      }
-                    })
+                    await analysisApi.shareReport(data.jobId)
 
-                    if (response.ok) {
-                      const shareUrl = `${window.location.origin}/${data.jobId}`
+                    const shareUrl = `${window.location.origin}/${data.jobId}`
 
-                      if (navigator.share) {
-                        await navigator.share({
-                          title: 'Website Analysis Report',
-                          text: 'Check out this website analysis report',
-                          url: shareUrl
-                        })
-                      } else {
-                        await navigator.clipboard.writeText(shareUrl)
-                      }
+                    if (navigator.share) {
+                      await navigator.share({
+                        title: 'Website Analysis Report',
+                        text: 'Check out this website analysis report',
+                        url: shareUrl
+                      })
+                    } else {
+                      await navigator.clipboard.writeText(shareUrl)
+                      // Optionally show a toast here
                     }
                   }
                 } catch (error) {
