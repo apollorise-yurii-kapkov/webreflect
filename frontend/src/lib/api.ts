@@ -12,6 +12,49 @@ const api = axios.create({
   },
 })
 
+// Custom error class with user-friendly message
+export class ApiError extends Error {
+  status: number
+  detail: string
+  
+  constructor(status: number, detail: string) {
+    super(detail)
+    this.status = status
+    this.detail = detail
+  }
+}
+
+// Interceptor to transform errors into ApiError with proper messages
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status || 0
+    let detail = 'Failed to connect to server. Please try again.'
+    
+    // Extract detail from response
+    const data = error.response?.data
+    if (data) {
+      if (typeof data === 'string') {
+        try {
+          const parsed = JSON.parse(data)
+          detail = parsed.detail || detail
+        } catch {
+          detail = data
+        }
+      } else if (data.detail) {
+        detail = data.detail
+      }
+    }
+    
+    // Create ApiError with extracted detail
+    const apiError = new ApiError(status, detail)
+    // Preserve original response data for rate limit info
+    ;(apiError as any).response = error.response
+    
+    return Promise.reject(apiError)
+  }
+)
+
 export interface AnalysisRequest {
   url: string
 }

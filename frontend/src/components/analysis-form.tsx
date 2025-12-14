@@ -6,7 +6,7 @@ import { Search, Globe, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
-import { analysisApi } from '@/lib/api'
+import { analysisApi, ApiError } from '@/lib/api'
 import { formatUrl, isValidUrl } from '@/lib/utils'
 import { AnalysisData } from '@/app/page'
 
@@ -53,25 +53,23 @@ export function AnalysisForm({ onAnalysisStart }: AnalysisFormProps) {
         description: "Your website is being analyzed. This may take a few minutes.",
       })
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Analysis start error:', error)
       
       let errorMessage = 'Failed to start analysis. Please try again.'
       let errorTitle = "Analysis Failed"
       
-      // Handle rate limit errors (429)
-      if (error.response?.status === 429) {
-        const rateLimitData = error.response?.data
-        errorTitle = "Daily Limit Reached"
-        errorMessage = rateLimitData?.detail || 
-                      `You've reached the daily limit of ${rateLimitData?.limit || 10} requests. ` +
-                      (rateLimitData?.retry_after_human 
-                        ? `Please try again in ${rateLimitData.retry_after_human}.` 
-                        : 'Please try again tomorrow.')
-      } else if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail
-      } else if (error.message) {
-        errorMessage = error.message
+      if (error instanceof ApiError) {
+        errorMessage = error.detail
+        
+        // Special handling for rate limit
+        if (error.status === 429) {
+          errorTitle = "Daily Limit Reached"
+          const data = (error as any).response?.data
+          if (data?.retry_after_human) {
+            errorMessage = `${error.detail} Please try again in ${data.retry_after_human}.`
+          }
+        }
       }
       
       setError(errorMessage)

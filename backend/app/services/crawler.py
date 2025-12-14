@@ -350,11 +350,32 @@ class WebsiteCrawler:
         # Remove duplicates and return
         return list(set(cta_texts))
     
-    async def validate_url(self, url: str) -> bool:
-        """Validate if URL is accessible."""
+    async def validate_url(self, url: str) -> tuple[bool, str]:
+        """Validate if URL is accessible. Returns (is_valid, error_message)."""
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
+            async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
                 response = await client.head(url)
-                return response.status_code < 400
-        except:
-            return False
+                
+                if response.status_code < 400:
+                    return True, ""
+                elif response.status_code == 403:
+                    return False, "This website is protected and blocking our access. Please check if the site allows external crawlers."
+                elif response.status_code == 401:
+                    return False, "This website requires authentication. We can only analyze publicly accessible pages."
+                elif response.status_code == 404:
+                    return False, "The page was not found. Please check the URL and try again."
+                elif response.status_code == 503:
+                    return False, "The website is temporarily unavailable. Please try again later."
+                elif response.status_code >= 500:
+                    return False, "The website is experiencing server issues. Please try again later."
+                else:
+                    return False, f"Unable to access the website (HTTP {response.status_code}). Please verify the URL is correct."
+                    
+        except httpx.TimeoutException:
+            return False, "The website took too long to respond. Please check if the site is online and try again."
+        except httpx.ConnectError:
+            return False, "Could not connect to the website. Please verify the URL is correct and the site is online."
+        except httpx.TooManyRedirects:
+            return False, "The website has too many redirects. Please check the URL and try again."
+        except Exception:
+            return False, "Unable to reach the website. Please verify the URL is correct and accessible."

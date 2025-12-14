@@ -48,9 +48,9 @@ class AnalysisService:
             return existing_job
 
         # Validate URL first
-        is_valid = await self.crawler.validate_url(url)
+        is_valid, error_message = await self.crawler.validate_url(url)
         if not is_valid:
-            raise ValueError("URL is not accessible")
+            raise ValueError(error_message or "Unable to access the website")
         
         # Create job
         job = AnalysisJob(url=url, status="pending")
