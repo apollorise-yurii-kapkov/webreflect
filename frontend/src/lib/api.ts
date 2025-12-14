@@ -1,9 +1,11 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
+// In production with nginx proxy: NEXT_PUBLIC_API_URL should be empty or '/'
+// nginx proxies /api/* -> backend:8000/api/*
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/v1`,
+  baseURL: `${API_BASE_URL}/api/v1`,
   timeout: 30000,
   withCredentials: true, // Enable cookies for rate limiting
   headers: {

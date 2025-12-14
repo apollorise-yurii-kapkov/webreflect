@@ -12,7 +12,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # This will create the folder .next/standalone
-ARG NEXT_PUBLIC_API_URL=/api
+# Empty URL means requests go to /api/v1 (same origin, nginx proxies to backend)
+ARG NEXT_PUBLIC_API_URL=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
