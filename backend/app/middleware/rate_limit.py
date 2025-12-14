@@ -70,7 +70,7 @@ class RateLimitMiddleware:
         client_data["last_request"] = current_time
         
         # Cleanup old entries periodically
-        if len(self.clients) > 1000:  # Cleanup when too many entries
+        if len(self.clients) > 3000:  # Cleanup when too many entries
             self._cleanup_old_entries()
         
         return await call_next(request)
