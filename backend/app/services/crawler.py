@@ -169,8 +169,8 @@ class WebsiteCrawler:
                 'raw_html': response.text
             }
             
-        except Exception as e:
-            print(f"Error crawling page {url}: {e}")
+        except Exception:
+            # Silently skip failed pages
             return None
     
     def _extract_internal_links(self, base_url: str, html: str) -> List[str]:

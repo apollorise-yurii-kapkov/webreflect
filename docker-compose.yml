@@ -19,7 +19,7 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 512M
+          memory: 750M
 
   backend:
     build:
@@ -39,10 +39,7 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 512M
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
+          memory: 750M
 
 volumes:
   sqlite_data:
