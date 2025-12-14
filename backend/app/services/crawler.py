@@ -18,46 +18,101 @@ class WebsiteCrawler:
         self.max_content_length = settings.MAX_CONTENT_LENGTH
     
     async def crawl_website(self, url: str) -> List[Dict]:
-        """Crawl website and extract content from multiple pages."""
+        """
+        Crawl website using a BFS strategy with strict token and page limits.
+        
+        Strategy:
+        1. Crawl root page (Level 0).
+        2. Extract Level 1 links (limit 20).
+        3. Crawl Level 1 pages.
+        4. If token space remains, crawl Level 2 pages (links found on Level 1).
+        5. Stop when token limit (50k) is reached or no more links.
+        """
+        MAX_TOKENS = 50000
+        LEVEL_1_LIMIT = 20
+        
+        crawled_pages = []
+        visited_urls = set()
+        total_tokens = 0
+        
+        # Queue stores: (url, level)
+        # Using a list as a simple queue for BFS
+        queue = [(url, 0)]
+        visited_urls.add(url)
+        
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                # Get main page first
-                main_page = await self._crawl_page(client, url)
-                if not main_page:
-                    return []
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
                 
-                pages = [main_page]
-                crawled_urls = {url}
-                
-                # Try to get sitemap for comprehensive page discovery
-                sitemap_urls = await self._get_sitemap_urls(client, url)
-                
-                # Extract internal links from main page
-                internal_links = self._extract_internal_links(url, main_page.get('raw_html', ''))
-                
-                # Prioritize navigation and important pages
-                prioritized_links = self._prioritize_links(internal_links, main_page.get('raw_html', ''))
-                
-                # Combine sitemap URLs with discovered links, prioritizing sitemap
-                all_links = list(dict.fromkeys(sitemap_urls + prioritized_links))  # Remove duplicates, keep order
-                
-                # Crawl additional pages (limited)
-                for link in all_links[:self.max_pages - 1]:
-                    if link not in crawled_urls:
-                        try:
-                            page = await self._crawl_page(client, link)
-                            if page:
-                                pages.append(page)
-                                crawled_urls.add(link)
-                        except Exception as e:
-                            print(f"Error crawling {link}: {e}")
-                            continue
-                
-                return pages
-                
+                while queue:
+                    if total_tokens >= MAX_TOKENS:
+                        print("Token limit reached. Stopping crawl.")
+                        break
+                        
+                    current_url, level = queue.pop(0)
+                    
+                    # Crawl the page
+                    print(f"Crawling {current_url} (Level {level})")
+                    page_data = await self._crawl_page(client, current_url)
+                    
+                    if not page_data:
+                        continue
+                        
+                    # Calculate tokens (approx 4 chars per token)
+                    content_len = len(page_data.get('content', ''))
+                    page_tokens = content_len // 4
+                    
+                    # If this single page exceeds the remaining limit, we might still include it 
+                    # if it's the first page, or maybe we truncate? 
+                    # User said "accumulate until 50k". Let's update total.
+                    total_tokens += page_tokens
+                    crawled_pages.append(page_data)
+                    
+                    # Stop if we just exceeded limit
+                    if total_tokens >= MAX_TOKENS:
+                        break
+                    
+                    # Logic for adding next level links
+                    # Level 0 -> adds Level 1 (limit 20)
+                    # Level 1 -> adds Level 2 (unlimited count, but bounded by global token/page limits mostly)
+                    # User said: "Then if window allows, go to links inside those pages".
+                    
+                    # We usually don't go deeper than Level 2 based on the description, 
+                    # but "iterate until links end or 50k tokens" implies potential depth, 
+                    # yet "1st level links... then links inside those" sounds like 2 levels depth.
+                    # I will allow Level 2.
+                    
+                    if level < 2:
+                        raw_html = page_data.get('raw_html', '')
+                        internal_links = self._extract_internal_links(current_url, raw_html)
+                        
+                        # Prioritize is good, but for Level 0 we specifically need to limit to 20
+                        if level == 0:
+                            # Prioritize to get the "best" 20 links
+                            prioritized = self._prioritize_links(internal_links, raw_html)
+                            # Take top 20 unique that haven't been visited
+                            count_added = 0
+                            for link in prioritized:
+                                if link not in visited_urls:
+                                    if count_added < LEVEL_1_LIMIT:
+                                        visited_urls.add(link)
+                                        queue.append((link, level + 1))
+                                        count_added += 1
+                        else:
+                            # For Level 1 -> Level 2, we just add them all (BFS will handle order)
+                            # We might want to prioritize them too?
+                            # sticking to simple order or prioritization
+                            prioritized = self._prioritize_links(internal_links, raw_html)
+                            for link in prioritized:
+                                if link not in visited_urls:
+                                    visited_urls.add(link)
+                                    queue.append((link, level + 1))
+            
+            return crawled_pages
+
         except Exception as e:
-            print(f"Error crawling website {url}: {e}")
-            return []
+            print(f"Error during crawl website {url}: {e}")
+            # Return whatever we managed to crawl
+            return crawled_pages
     
     async def _crawl_page(self, client: httpx.AsyncClient, url: str) -> Optional[Dict]:
         """Crawl a single page and extract content."""

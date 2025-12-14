@@ -82,9 +82,10 @@ class WebsiteAnalyzer:
         - Be completely objective and factual
         - Do not include subjective opinions, scores, or recommendations
         - Focus on describing what IS present, not what SHOULD be
-        - Keep the summary between 500-1000 words
+        - Provide a concise "Executive Summary" style report (approx. 1 page, up to 1000 words)
         - Use clear, professional language
         - Organize information logically with smooth transitions
+        - If content is partial or missing, acknowledge what was found without Hallucinating
         
         Write this as a cohesive analysis, not as bullet points or lists.
         """
