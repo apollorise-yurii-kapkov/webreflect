@@ -75,11 +75,11 @@ export function CSSMirror({ children }: CSSMirrorProps) {
           style={{ perspective: '1000px' }}
         >
           {/* Mirror frame with enhanced effects */}
-          <div className="relative bg-gradient-to-br from-gray-700/20 to-gray-900/40 backdrop-blur-2xl border-2 border-white/20 rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-12 md:p-20 shadow-[0_0_80px_rgba(59,130,246,0.3)] overflow-hidden">
-            
+          <div className="relative bg-gradient-to-br from-gray-600/30 to-gray-800/50 backdrop-blur-2xl border-2 border-white/30 rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-12 md:p-20 shadow-[0_0_80px_rgba(59,130,246,0.4)] overflow-hidden">
+
             {/* Mirror surface with realistic reflections */}
-            <div className="absolute inset-2 sm:inset-4 rounded-xl sm:rounded-[2rem] overflow-hidden bg-gradient-to-br from-gray-800/60 to-gray-900/80 backdrop-blur-3xl">
-              
+            <div className="absolute inset-2 sm:inset-4 rounded-xl sm:rounded-[2rem] overflow-hidden bg-gradient-to-br from-gray-700/50 to-gray-800/70 backdrop-blur-3xl">
+
               {/* Animated silhouettes behind glass - more prominent */}
               {[0, 1, 2, 3].map((i) => (
                 <motion.div
@@ -107,7 +107,7 @@ export function CSSMirror({ children }: CSSMirrorProps) {
 
               {/* Enhanced color shifting background */}
               <motion.div
-                className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-3xl"
+                className="absolute inset-0 bg-gradient-to-br from-blue-500/30 via-purple-500/30 to-pink-500/30 blur-3xl"
                 animate={{
                   background: [
                     'linear-gradient(45deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2), rgba(236, 72, 153, 0.2))',
@@ -172,7 +172,7 @@ export function CSSMirror({ children }: CSSMirrorProps) {
             <div className="absolute bottom-4 left-4 w-24 h-24 bg-gradient-to-tr from-blue-400/20 to-transparent rounded-full blur-xl" />
 
             {/* Enhanced noise texture */}
-            <div 
+            <div
               className="absolute inset-0 opacity-20 mix-blend-mode-overlay"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='6' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
