@@ -3,7 +3,21 @@ import axios from 'axios'
 // NEXT_PUBLIC_API_URL = full path to API including /api/v1
 // Local: http://localhost:8000/api/v1
 // Prod: https://reflection.apollorise.tech/api/v1
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1'
+// NEXT_PUBLIC_API_URL = full path to API including /api/v1
+// Local: http://localhost:8000/api/v1
+// Prod: https://reflection.apollorise.tech/api/v1
+let apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1'
+
+// Ensure URL ends with /api/v1 if it doesn't already
+if (!apiUrl.endsWith('/api/v1')) {
+  // Remove trailing slash if present
+  if (apiUrl.endsWith('/')) {
+    apiUrl = apiUrl.slice(0, -1)
+  }
+  apiUrl += '/api/v1'
+}
+
+const API_BASE_URL = apiUrl
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -19,7 +33,7 @@ const api = axios.create({
 export class ApiError extends Error {
   status: number
   detail: string
-  
+
   constructor(status: number, detail: string) {
     super(detail)
     this.status = status
@@ -33,7 +47,7 @@ api.interceptors.response.use(
   (error) => {
     const status = error.response?.status || 0
     let detail = 'Failed to connect to server. Please try again.'
-    
+
     // Extract detail from response
     const data = error.response?.data
     if (data) {
@@ -48,12 +62,12 @@ api.interceptors.response.use(
         detail = data.detail
       }
     }
-    
+
     // Create ApiError with extracted detail
     const apiError = new ApiError(status, detail)
-    // Preserve original response data for rate limit info
-    ;(apiError as any).response = error.response
-    
+      // Preserve original response data for rate limit info
+      ; (apiError as any).response = error.response
+
     return Promise.reject(apiError)
   }
 )
@@ -152,6 +166,12 @@ export const analysisApi = {
   // Get shared report (publicly accessible)
   getSharedReport: async (jobId: string): Promise<AnalysisStatusResponse> => {
     const response = await api.get(`/analysis/shared/${jobId}`)
+    return response.data
+  },
+
+  // Get daily limit status
+  getLimitStatus: async (): Promise<{ limit: number; used: number; remaining: number }> => {
+    const response = await api.get('/limits/status')
     return response.data
   },
 }

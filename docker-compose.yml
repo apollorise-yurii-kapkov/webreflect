@@ -28,7 +28,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:///./website_reflection.db
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/website_reflection.db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./backend:/app
@@ -43,6 +43,7 @@ services:
 
 volumes:
   sqlite_data:
+
 
 networks:
   app-network:

@@ -25,13 +25,13 @@ export function AnalysisProgress({ data, onComplete, onError }: AnalysisProgress
     const pollStatus = async () => {
       try {
         const status = await analysisApi.getAnalysisStatus(data.jobId)
-        
+
         setProgress(status.progress)
         setCurrentStep(getProgressMessage(status.progress))
 
         if (status.status === 'completed') {
           setIsPolling(false)
-          
+
           // Get the full result
           try {
             const result = await analysisApi.getAnalysisResult(data.jobId)
@@ -40,12 +40,12 @@ export function AnalysisProgress({ data, onComplete, onError }: AnalysisProgress
             console.error('Error fetching result:', resultError)
             onError('Failed to fetch analysis result')
           }
-          
+
         } else if (status.status === 'failed') {
           setIsPolling(false)
           onError(status.error_message || 'Analysis failed')
         }
-        
+
       } catch (error) {
         console.error('Polling error:', error)
         setIsPolling(false)
@@ -93,7 +93,7 @@ export function AnalysisProgress({ data, onComplete, onError }: AnalysisProgress
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             />
-            
+
             {/* Center Content */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <motion.div
@@ -115,7 +115,7 @@ export function AnalysisProgress({ data, onComplete, onError }: AnalysisProgress
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className="glass-effect rounded-2xl p-8 space-y-8"
+        className="glass-panel rounded-2xl p-8 space-y-8"
       >
         {/* Header */}
         <div className="text-center space-y-2">
@@ -142,18 +142,17 @@ export function AnalysisProgress({ data, onComplete, onError }: AnalysisProgress
           {steps.map((step, index) => {
             const isActive = progress >= step.threshold - 20 && progress < step.threshold
             const isCompleted = progress >= step.threshold
-            
+
             return (
               <motion.div
                 key={step.name}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                className={`text-center space-y-2 p-3 rounded-lg transition-colors ${
-                  isActive ? 'bg-primary/10 border border-primary/20' : 
-                  isCompleted ? 'bg-green-500/10 border border-green-500/20' : 
-                  'bg-muted/20'
-                }`}
+                className={`text-center space-y-2 p-3 rounded-lg transition-colors ${isActive ? 'bg-primary/10 border border-primary/20' :
+                    isCompleted ? 'bg-green-500/10 border border-green-500/20' :
+                      'bg-muted/20'
+                  }`}
               >
                 <div className="flex justify-center">
                   {isCompleted ? (
@@ -170,11 +169,10 @@ export function AnalysisProgress({ data, onComplete, onError }: AnalysisProgress
                   )}
                 </div>
                 <div>
-                  <h3 className={`font-semibold text-sm ${
-                    isActive ? 'text-primary' : 
-                    isCompleted ? 'text-green-500' : 
-                    'text-muted-foreground'
-                  }`}>
+                  <h3 className={`font-semibold text-sm ${isActive ? 'text-primary' :
+                      isCompleted ? 'text-green-500' :
+                        'text-muted-foreground'
+                    }`}>
                     {step.name}
                   </h3>
                   <p className="text-xs text-muted-foreground">

@@ -197,17 +197,9 @@ export function AnalysisResult({ data, onReset }: AnalysisResultProps) {
     }
 
     // Force a test page break to ensure pagination works
-    pdf.addPage()
-    pdf.setFontSize(12)
-    pdf.text('Test Page 2 - If you see this, pagination is working!', margin, 50)
-
-    // Add page numbers
-    const pageCount = (pdf.internal as any).getNumberOfPages()
-    for (let i = 1; i <= pageCount; i++) {
-      pdf.setPage(i)
-      pdf.setFontSize(10)
-      pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.width - 40, pdf.internal.pageSize.height - 10)
-    }
+    // pdf.addPage()
+    // pdf.setFontSize(12)
+    // pdf.text('Test Page 2 - If you see this, pagination is working!', margin, 50)
 
     pdf.save(`website-analysis-${new Date().toISOString().split('T')[0]}.pdf`)
 

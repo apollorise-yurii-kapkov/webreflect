@@ -14,12 +14,13 @@ interface MirrorSectionProps {
 export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [dailyLimit, setDailyLimit] = useState<{ limit: number, used: number, remaining: number } | null>(null)
   const { toast } = useToast()
 
   const formatUrl = (input: string): string => {
     const trimmed = input.trim()
     if (!trimmed) return ''
-    
+
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       return trimmed
     }
@@ -34,6 +35,18 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
       return false
     }
   }
+
+  React.useEffect(() => {
+    const fetchLimit = async () => {
+      try {
+        const status = await analysisApi.getLimitStatus()
+        setDailyLimit(status)
+      } catch (error) {
+        console.error('Failed to fetch limit status', error)
+      }
+    }
+    fetchLimit()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,6 +65,16 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
     setIsLoading(true)
     try {
       const response = await analysisApi.startAnalysis({ url: formattedUrl })
+
+      // Update limit locally after successful start
+      if (dailyLimit) {
+        setDailyLimit({
+          ...dailyLimit,
+          used: dailyLimit.used + 1,
+          remaining: Math.max(0, dailyLimit.remaining - 1)
+        })
+      }
+
       onAnalysisStart({
         jobId: response.job_id,
         url: response.url,
@@ -135,7 +158,11 @@ export function MirrorSection({ onAnalysisStart }: MirrorSectionProps) {
             </div>
             <div className="mt-4 text-center">
               <span className="text-xs text-white/40 font-light tracking-wide">
-                Daily limit: 10 reflections per day
+                {dailyLimit ? (
+                  <>Daily limit: {dailyLimit.remaining} / {dailyLimit.limit} reflections remaining</>
+                ) : (
+                  <>Daily limit: 10 reflections per day</>
+                )}
               </span>
             </div>
           </motion.form>
